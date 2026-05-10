@@ -1,0 +1,62 @@
+name: Submit Curated Pack
+description: Propose a new curated ADR pack for the registry
+title: "[Pack] "
+labels: ["pack-submission"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for submitting a curated pack! Please fill out the details below.
+        See [CONTRIBUTING.md](../../CONTRIBUTING.md) for full requirements.
+
+  - type: input
+    id: name
+    attributes:
+      label: Pack name
+      description: A short, kebab-case identifier (e.g. "react-hooks", "api-design")
+      placeholder: my-pack
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What does this pack cover? What problems does it help prevent?
+      placeholder: Describe the pack and its purpose...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: languages
+    attributes:
+      label: Languages
+      description: Which languages does this pack target?
+      multiple: true
+      options:
+        - TypeScript
+        - JavaScript
+        - Python
+        - Go
+        - Rust
+        - Java
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: adrs
+    attributes:
+      label: Planned ADRs
+      description: List the ADRs you plan to include (ID + title)
+      placeholder: |
+        - ADR-001: First decision
+        - ADR-002: Second decision
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Any other context, links, or references

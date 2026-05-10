@@ -1,0 +1,47 @@
+name: Report Broken Link
+description: Report a community link that is no longer accessible
+title: "[Broken Link] "
+labels: ["broken-link"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help us keep the registry clean by reporting broken links.
+
+  - type: input
+    id: url
+    attributes:
+      label: Broken URL
+      description: The URL from community/links.yaml that is broken
+      placeholder: https://github.com/user/my-adrs
+    validations:
+      required: true
+
+  - type: input
+    id: title
+    attributes:
+      label: Link title
+      description: The title of the entry in links.yaml
+      placeholder: My ADR Collection
+    validations:
+      required: true
+
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: Issue type
+      description: What kind of problem did you encounter?
+      options:
+        - Repository deleted or not found (404)
+        - Repository made private
+        - Repository no longer archgate-compatible
+        - URL redirects to unrelated content
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Additional details
+      description: Any other context about the broken link

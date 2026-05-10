@@ -1,0 +1,57 @@
+name: Submit Community Link
+description: Add a link to an external archgate-compatible ADR repository
+title: "[Link] "
+labels: ["community-link"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing an archgate-compatible ADR repository!
+        See [CONTRIBUTING.md](../../CONTRIBUTING.md) for requirements.
+
+  - type: input
+    id: title
+    attributes:
+      label: Repository title
+      description: A human-readable name for the repository
+      placeholder: My ADR Collection
+    validations:
+      required: true
+
+  - type: input
+    id: url
+    attributes:
+      label: Repository URL
+      description: Full URL to the repository
+      placeholder: https://github.com/user/my-adrs
+    validations:
+      required: true
+
+  - type: input
+    id: tags
+    attributes:
+      label: Tags
+      description: Comma-separated tags (e.g. "language:typescript, concern:testing")
+      placeholder: "language:typescript, concern:security"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Short description of what this collection covers
+      placeholder: Describe what ADRs this repository contains...
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: compatibility
+    attributes:
+      label: Compatibility
+      description: Confirm the repository meets the requirements
+      options:
+        - label: The repository has an `archgate-pack.yaml` or ADR+rules file pairs
+          required: true
+        - label: The repository is publicly accessible
+          required: true

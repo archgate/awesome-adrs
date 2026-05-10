@@ -1,0 +1,74 @@
+name: Validate Packs
+
+on:
+  pull_request:
+    paths:
+      - "packs/**"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Find changed packs
+        id: changed
+        run: |
+          packs=$(git diff --name-only ${{ github.event.pull_request.base.sha }}..HEAD -- 'packs/' \
+            | cut -d'/' -f1-2 \
+            | sort -u)
+          echo "packs<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$packs" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Validate pack structure
+        run: |
+          set -euo pipefail
+          exit_code=0
+
+          while IFS= read -r pack; do
+            [ -z "$pack" ] && continue
+            echo "--- Validating $pack ---"
+
+            # Check archgate-pack.yaml exists
+            if [ ! -f "$pack/archgate-pack.yaml" ]; then
+              echo "::error::$pack/archgate-pack.yaml is missing"
+              exit_code=1
+              continue
+            fi
+
+            # Validate archgate-pack.yaml is valid YAML with required fields
+            if ! bun -e "
+              import { readFileSync } from 'fs';
+              import { parse } from 'yaml';
+              const doc = parse(readFileSync('$pack/archgate-pack.yaml', 'utf8'));
+              if (!doc.name) throw new Error('missing name');
+              if (!doc.version) throw new Error('missing version');
+              if (!doc.description) throw new Error('missing description');
+              console.log('archgate-pack.yaml is valid');
+            " 2>&1; then
+              echo "::error::$pack/archgate-pack.yaml has invalid structure"
+              exit_code=1
+            fi
+
+            # Validate .rules.ts files have correct format
+            for rules_file in $(find "$pack" -name '*.rules.ts' 2>/dev/null); do
+              echo "  Checking $rules_file"
+
+              if ! head -1 "$rules_file" | grep -q '/// <reference path='; then
+                echo "::error::$rules_file is missing triple-slash reference directive"
+                exit_code=1
+              fi
+
+              if ! grep -q 'satisfies RuleSet' "$rules_file"; then
+                echo "::error::$rules_file is missing 'satisfies RuleSet'"
+                exit_code=1
+              fi
+            done
+          done <<< "${{ steps.changed.outputs.packs }}"
+
+          exit $exit_code
