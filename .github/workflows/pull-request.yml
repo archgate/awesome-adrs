@@ -1,0 +1,200 @@
+name: Validate
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-packs:
+    name: Validate Packs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Find changed packs
+        id: changed
+        run: |
+          packs=$(git diff --name-only ${{ github.event.pull_request.base.sha }}..HEAD -- 'packs/' \
+            | grep -v '.gitkeep' \
+            | cut -d'/' -f1-2 \
+            | sort -u || true)
+          echo "packs<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$packs" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+          if [ -z "$packs" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate pack structure
+        if: steps.changed.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          exit_code=0
+
+          while IFS= read -r pack; do
+            [ -z "$pack" ] && continue
+            echo "--- Validating $pack ---"
+
+            # Check archgate-pack.yaml exists
+            if [ ! -f "$pack/archgate-pack.yaml" ]; then
+              echo "::error::$pack/archgate-pack.yaml is missing"
+              exit_code=1
+              continue
+            fi
+
+            # Validate archgate-pack.yaml is valid YAML with required fields
+            if ! bun -e "
+              import { readFileSync } from 'fs';
+              import { parse } from 'yaml';
+              const doc = parse(readFileSync('$pack/archgate-pack.yaml', 'utf8'));
+              if (!doc.name) throw new Error('missing name');
+              if (!doc.version) throw new Error('missing version');
+              if (!doc.description) throw new Error('missing description');
+              console.log('archgate-pack.yaml is valid');
+            " 2>&1; then
+              echo "::error::$pack/archgate-pack.yaml has invalid structure"
+              exit_code=1
+            fi
+
+            # Validate .rules.ts files have correct format
+            for rules_file in $(find "$pack" -name '*.rules.ts' 2>/dev/null); do
+              echo "  Checking $rules_file"
+
+              if ! head -1 "$rules_file" | grep -q '/// <reference path='; then
+                echo "::error::$rules_file is missing triple-slash reference directive"
+                exit_code=1
+              fi
+
+              if ! grep -q 'satisfies RuleSet' "$rules_file"; then
+                echo "::error::$rules_file is missing 'satisfies RuleSet'"
+                exit_code=1
+              fi
+            done
+          done <<< "${{ steps.changed.outputs.packs }}"
+
+          exit $exit_code
+
+  validate-community-links:
+    name: Validate Community Links
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Check if links changed
+        id: check
+        run: |
+          if git diff --name-only ${{ github.event.pull_request.base.sha }}..HEAD | grep -q 'community/links.yaml'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate links.yaml schema and URLs
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          bun -e "
+          import { readFileSync } from 'fs';
+          import { parse } from 'yaml';
+
+          const doc = parse(readFileSync('community/links.yaml', 'utf8'));
+          const links = doc.links ?? [];
+          const errors: string[] = [];
+          const seen = new Set<string>();
+
+          const required = ['title', 'url', 'tags', 'description', 'submittedBy', 'submittedAt'] as const;
+
+          for (let i = 0; i < links.length; i++) {
+            const entry = links[i];
+            const prefix = 'links[' + i + ']';
+
+            for (const field of required) {
+              if (!entry[field]) {
+                errors.push(prefix + ' is missing required field: ' + field);
+              }
+            }
+
+            if (entry.url) {
+              if (seen.has(entry.url)) {
+                errors.push(prefix + ' has duplicate URL: ' + entry.url);
+              }
+              seen.add(entry.url);
+            }
+
+            if (entry.tags && !Array.isArray(entry.tags)) {
+              errors.push(prefix + '.tags must be an array');
+            }
+          }
+
+          if (errors.length > 0) {
+            console.error('Schema validation errors:');
+            for (const e of errors) console.error('  - ' + e);
+            process.exit(1);
+          }
+
+          console.log('Schema validation passed (' + links.length + ' entries)');
+
+          let urlErrors = 0;
+          for (let i = 0; i < links.length; i++) {
+            const url = links[i].url;
+            try {
+              const res = await fetch(url, { method: 'HEAD', redirect: 'follow' });
+              if (!res.ok) {
+                console.error('links[' + i + '] URL returned ' + res.status + ': ' + url);
+                urlErrors++;
+              } else {
+                console.log('links[' + i + '] URL ok: ' + url);
+              }
+            } catch (err) {
+              console.error('links[' + i + '] URL unreachable: ' + url);
+              urlErrors++;
+            }
+          }
+
+          if (urlErrors > 0) {
+            console.error(urlErrors + ' URL(s) failed to resolve');
+            process.exit(1);
+          }
+
+          console.log('All URLs resolve successfully');
+          "
+
+  # Gate job — single required status check for branch protection.
+  status:
+    name: Validate Code
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [validate-packs, validate-community-links]
+    steps:
+      - name: Check job results
+        run: |
+          if [[ "${{ needs.validate-packs.result }}" != "success" ]] || \
+             [[ "${{ needs.validate-community-links.result }}" != "success" ]]; then
+            echo "::error::One or more jobs failed:"
+            echo "  validate-packs: ${{ needs.validate-packs.result }}"
+            echo "  validate-community-links: ${{ needs.validate-community-links.result }}"
+            exit 1
+          fi
+          echo "All checks passed."
