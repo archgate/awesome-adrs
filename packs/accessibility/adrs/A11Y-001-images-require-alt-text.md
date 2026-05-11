@@ -1,7 +1,7 @@
 ---
 id: A11Y-001
 title: Images Require Alt Text
-domain: architecture
+domain: frontend
 rules: true
 files: ["**/*.tsx", "**/*.jsx"]
 ---

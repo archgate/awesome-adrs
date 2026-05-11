@@ -1,7 +1,7 @@
 ---
 id: REST-002
 title: Route Handler Colocation
-domain: architecture
+domain: backend
 rules: true
 files: ["**/routes/**/*.ts", "**/routes/**/*.js"]
 ---

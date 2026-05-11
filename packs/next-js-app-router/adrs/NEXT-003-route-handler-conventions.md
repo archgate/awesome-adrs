@@ -1,7 +1,7 @@
 ---
 id: NEXT-003
 title: Route Handler Conventions
-domain: architecture
+domain: frontend
 rules: true
 files: ["**/app/**/route.ts", "**/app/**/route.js"]
 ---

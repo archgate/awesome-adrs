@@ -1,7 +1,7 @@
 ---
 id: A11Y-003
 title: No Positive tabIndex
-domain: architecture
+domain: frontend
 rules: true
 files: ["**/*.tsx", "**/*.jsx"]
 ---

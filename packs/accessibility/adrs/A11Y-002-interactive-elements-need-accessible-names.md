@@ -1,7 +1,7 @@
 ---
 id: A11Y-002
 title: Interactive Elements Need Accessible Names
-domain: architecture
+domain: frontend
 rules: true
 files: ["**/*.tsx", "**/*.jsx"]
 ---

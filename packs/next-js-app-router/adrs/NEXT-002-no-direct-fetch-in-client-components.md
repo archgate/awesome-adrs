@@ -1,7 +1,7 @@
 ---
 id: NEXT-002
 title: No Direct fetch in Client Components
-domain: architecture
+domain: frontend
 rules: true
 files: ["**/*.tsx", "**/*.ts", "**/*.jsx"]
 ---

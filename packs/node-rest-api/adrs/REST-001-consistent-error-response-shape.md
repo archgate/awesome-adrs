@@ -1,7 +1,7 @@
 ---
 id: REST-001
 title: Consistent Error Response Shape
-domain: architecture
+domain: backend
 rules: true
 files: ["**/*.ts", "**/*.js"]
 ---

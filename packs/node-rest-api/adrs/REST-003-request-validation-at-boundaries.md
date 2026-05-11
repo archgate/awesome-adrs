@@ -1,7 +1,7 @@
 ---
 id: REST-003
 title: Request Validation at Boundaries
-domain: architecture
+domain: backend
 rules: true
 files: ["**/routes/**/*.ts", "**/routes/**/*.js"]
 ---

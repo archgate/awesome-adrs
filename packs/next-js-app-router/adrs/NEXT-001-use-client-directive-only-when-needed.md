@@ -1,7 +1,7 @@
 ---
 id: NEXT-001
 title: Use Client Directive Only When Needed
-domain: architecture
+domain: frontend
 rules: true
 files: ["**/*.tsx", "**/*.ts", "**/*.jsx"]
 ---
