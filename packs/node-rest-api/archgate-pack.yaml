@@ -1,0 +1,9 @@
+name: node-rest-api
+version: 0.1.0
+description: REST API conventions for Node.js backends — consistent errors, route colocation, request validation.
+maintainers:
+  - github: archgate
+tags:
+  - domain:rest-api
+  - runtime:node
+  - language:typescript

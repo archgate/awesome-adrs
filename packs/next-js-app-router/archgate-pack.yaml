@@ -1,0 +1,9 @@
+name: next-js-app-router
+version: 0.1.0
+description: Next.js App Router conventions — server-first components, data fetching boundaries, route handler exports.
+maintainers:
+  - github: archgate
+tags:
+  - framework:nextjs
+  - language:typescript
+  - runtime:node
