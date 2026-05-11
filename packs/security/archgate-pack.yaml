@@ -1,0 +1,9 @@
+name: security
+version: 0.1.0
+description: Security baseline — no secrets in code, no eval, dependency review.
+maintainers:
+  - github: archgate
+tags:
+  - concern:security
+  - language:typescript
+  - language:javascript
