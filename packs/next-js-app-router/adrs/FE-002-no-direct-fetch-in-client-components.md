@@ -1,5 +1,5 @@
 ---
-id: NEXT-002
+id: FE-002
 title: No Direct fetch in Client Components
 domain: frontend
 rules: true

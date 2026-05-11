@@ -1,5 +1,5 @@
 ---
-id: REST-002
+id: BE-002
 title: Route Handler Colocation
 domain: backend
 rules: true

@@ -1,5 +1,5 @@
 ---
-id: REST-001
+id: BE-001
 title: Consistent Error Response Shape
 domain: backend
 rules: true

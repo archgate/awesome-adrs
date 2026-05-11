@@ -1,5 +1,5 @@
 ---
-id: OBS-001
+id: ARCH-001
 title: Structured Logging Only
 domain: architecture
 rules: true

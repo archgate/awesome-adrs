@@ -1,5 +1,5 @@
 ---
-id: REST-003
+id: BE-003
 title: Request Validation at Boundaries
 domain: backend
 rules: true

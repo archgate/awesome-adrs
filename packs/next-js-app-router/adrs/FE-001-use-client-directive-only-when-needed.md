@@ -1,5 +1,5 @@
 ---
-id: NEXT-001
+id: FE-001
 title: Use Client Directive Only When Needed
 domain: frontend
 rules: true

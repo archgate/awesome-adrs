@@ -1,5 +1,5 @@
 ---
-id: A11Y-002
+id: FE-002
 title: Interactive Elements Need Accessible Names
 domain: frontend
 rules: true

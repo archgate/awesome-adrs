@@ -1,5 +1,5 @@
 ---
-id: NEXT-003
+id: FE-003
 title: Route Handler Conventions
 domain: frontend
 rules: true

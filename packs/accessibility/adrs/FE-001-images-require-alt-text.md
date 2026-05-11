@@ -1,5 +1,5 @@
 ---
-id: A11Y-001
+id: FE-001
 title: Images Require Alt Text
 domain: frontend
 rules: true

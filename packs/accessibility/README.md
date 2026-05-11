@@ -6,9 +6,9 @@ Accessibility requirements for web components — alt text, accessible names, ta
 
 | ID       | Title                                  |
 | -------- | -------------------------------------- |
-| A11Y-001 | Images Require Alt Text                |
-| A11Y-002 | Interactive Elements Need Accessible Names |
-| A11Y-003 | No Positive tabIndex                   |
+| FE-001 | Images Require Alt Text                |
+| FE-002 | Interactive Elements Need Accessible Names |
+| FE-003 | No Positive tabIndex                   |
 
 ## Quick Start
 
@@ -21,5 +21,5 @@ archgate adr import packs/accessibility
 Cherry-pick a single ADR:
 
 ```bash
-archgate adr import packs/accessibility/adrs/A11Y-001-images-require-alt-text
+archgate adr import packs/accessibility/adrs/FE-001-images-require-alt-text
 ```

@@ -1,5 +1,5 @@
 ---
-id: OBS-003
+id: ARCH-003
 title: Error Tracking Coverage
 domain: architecture
 rules: true

@@ -1,5 +1,5 @@
 ---
-id: OBS-002
+id: ARCH-002
 title: Request ID Propagation
 domain: architecture
 rules: true
