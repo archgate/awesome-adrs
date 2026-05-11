@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Archgate Documentation
+    url: https://cli.archgate.dev
+    about: Learn how to use Archgate and write ADRs
+  - name: Community Discussions
+    url: https://github.com/archgate/cli/discussions
+    about: Ask questions and share ideas with the community
