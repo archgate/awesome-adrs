@@ -92,6 +92,25 @@ jobs:
 
           exit $exit_code
 
+      - name: Lint rules with oxlint
+        if: steps.changed.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          exit_code=0
+
+          while IFS= read -r pack; do
+            [ -z "$pack" ] && continue
+            rules_files=$(find "$pack" -name '*.rules.ts' 2>/dev/null || true)
+            [ -z "$rules_files" ] && continue
+
+            echo "--- Linting $pack ---"
+            if ! bunx oxlint --deny-warnings $rules_files; then
+              exit_code=1
+            fi
+          done <<< "${{ steps.changed.outputs.packs }}"
+
+          exit $exit_code
+
   validate-community-links:
     name: Validate Community Links
     runs-on: ubuntu-latest
