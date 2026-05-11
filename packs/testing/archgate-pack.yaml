@@ -1,0 +1,9 @@
+name: testing
+version: 0.1.0
+description: Testing conventions — colocated tests, no .only/.skip committed, descriptive names.
+maintainers:
+  - github: archgate
+tags:
+  - concern:testing
+  - language:typescript
+  - language:javascript

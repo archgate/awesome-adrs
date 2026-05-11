@@ -1,0 +1,10 @@
+name: typescript-strict
+version: 0.1.0
+description: Strict TypeScript baseline — no any, explicit return types, strict tsconfig, no non-null assertions.
+maintainers:
+  - github: archgate
+tags:
+  - language:typescript
+  - runtime:node
+  - runtime:bun
+  - runtime:deno
