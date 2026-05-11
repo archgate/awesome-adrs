@@ -1,0 +1,10 @@
+name: accessibility
+version: 0.1.0
+description: Accessibility requirements for web components — alt text, accessible names, tab order.
+maintainers:
+  - github: archgate
+tags:
+  - concern:accessibility
+  - language:typescript
+  - language:javascript
+  - framework:react

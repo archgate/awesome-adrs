@@ -1,0 +1,9 @@
+name: observability
+version: 0.1.0
+description: Observability conventions — structured logging, request ID propagation, error tracking.
+maintainers:
+  - github: archgate
+tags:
+  - concern:observability
+  - language:typescript
+  - language:javascript
