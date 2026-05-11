@@ -54,13 +54,28 @@ export default {
           });
         }
 
-        // Find buttons with only an aria-label={undefined} or missing aria-label
+        // Find buttons with children that are non-text (e.g. icon-only) without aria-label
         const buttonsNoLabel = await ctx.grepFiles(
-          /<button\s+(?!.*(?:aria-label|aria-labelledby|children))[^>]*>[^<]*<[^/]/u,
+          /<button\s+(?!.*(?:aria-label|aria-labelledby))[^>]*>[^<]*<[^/]/u,
           sourceGlob
         );
 
-        // This is best-effort — the grep-based approach catches the most obvious cases
+        for (const m of buttonsNoLabel) {
+          if (
+            m.file.includes(".test.") ||
+            m.file.includes(".spec.") ||
+            m.file.includes("__tests__")
+          ) {
+            continue;
+          }
+          ctx.report.warning({
+            message:
+              "Button with non-text content (e.g. icon) may be missing an accessible name — add `aria-label` or `aria-labelledby`.",
+            file: m.file,
+            line: m.line,
+            fix: 'Add an aria-label: `<button aria-label="Description"><Icon /></button>`.',
+          });
+        }
       },
     },
   },
