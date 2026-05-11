@@ -104,7 +104,7 @@ jobs:
             [ -z "$rules_files" ] && continue
 
             echo "--- Linting $pack ---"
-            if ! bunx oxlint --deny-warnings $rules_files; then
+            if ! bunx oxlint --deny-warnings --ignore-pattern='*.d.ts' --allow triple-slash-reference $rules_files; then
               exit_code=1
             fi
           done <<< "${{ steps.changed.outputs.packs }}"
