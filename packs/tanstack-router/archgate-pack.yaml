@@ -1,0 +1,9 @@
+name: tanstack-router
+version: 0.1.0
+description: File-based routing with TanStack Router — type-safe routes, params, search params, and loaders.
+maintainers:
+  - github: rhuan-barreto
+tags:
+  - framework:react
+  - library:tanstack-router
+  - language:typescript
