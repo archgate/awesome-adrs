@@ -1,0 +1,9 @@
+name: drizzle-sqlite
+version: 0.1.0
+description: Complete SQLite data layer with Drizzle ORM — schema, migrations, UUID v7 keys, audit fields, naming conventions, environment separation.
+maintainers:
+  - github: rhuan-barreto
+tags:
+  - database:sqlite
+  - orm:drizzle
+  - language:typescript
