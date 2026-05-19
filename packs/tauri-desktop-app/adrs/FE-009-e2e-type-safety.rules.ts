@@ -8,9 +8,7 @@ export default {
       async check(ctx) {
         let frontendPkg: PackageJson | undefined;
         try {
-          frontendPkg = await ctx.readJSON(
-            "packages/frontend/package.json",
-          ) as PackageJson;
+          frontendPkg = (await ctx.readJSON("packages/frontend/package.json")) as PackageJson;
         } catch {
           ctx.report.warning({
             message:
@@ -26,9 +24,7 @@ export default {
 
         // Check that the frontend depends on the backend workspace package
         const backendDepNames = Object.keys(allDeps).filter(
-          (name) =>
-            name.includes("backend") ||
-            allDeps[name]?.startsWith("workspace:"),
+          (name) => name.includes("backend") || allDeps[name]?.startsWith("workspace:"),
         );
 
         // Look for a backend workspace dependency
@@ -51,21 +47,17 @@ export default {
               message:
                 "packages/frontend/package.json has no workspace dependency on the backend package — e2e type safety requires the backend as a workspace dependency",
               file: "packages/frontend/package.json",
-              fix: "Add the backend package as a workspace dependency (e.g., \"@myapp/backend\": \"workspace:*\")",
+              fix: 'Add the backend package as a workspace dependency (e.g., "@myapp/backend": "workspace:*")',
             });
           }
         }
 
         // Check for hc or hcWithType import in frontend source files
-        const apiClientFiles = await ctx.glob(
-          "packages/frontend/src/api/client.ts",
-        );
+        const apiClientFiles = await ctx.glob("packages/frontend/src/api/client.ts");
 
         if (apiClientFiles.length === 0) {
           // Also check for .tsx variant
-          const apiClientTsx = await ctx.glob(
-            "packages/frontend/src/api/client.tsx",
-          );
+          const apiClientTsx = await ctx.glob("packages/frontend/src/api/client.tsx");
           if (apiClientTsx.length === 0) {
             ctx.report.warning({
               message:
@@ -79,13 +71,11 @@ export default {
 
         // Check that the client file imports hc or hcWithType
         const clientFile =
-          apiClientFiles[0] ??
-          (await ctx.glob("packages/frontend/src/api/client.tsx"))[0];
+          apiClientFiles[0] ?? (await ctx.glob("packages/frontend/src/api/client.tsx"))[0];
 
         if (clientFile) {
           const content = await ctx.readFile(clientFile);
-          const hasHcImport =
-            /\bhc\b/.test(content) || /\bhcWithType\b/.test(content);
+          const hasHcImport = /\bhc\b/.test(content) || /\bhcWithType\b/.test(content);
 
           if (!hasHcImport) {
             ctx.report.violation({

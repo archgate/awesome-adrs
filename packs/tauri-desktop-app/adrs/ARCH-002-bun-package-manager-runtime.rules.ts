@@ -17,14 +17,9 @@ export default {
       },
     },
     "no-wrong-lockfiles": {
-      description:
-        "No package-lock.json, yarn.lock, or pnpm-lock.yaml allowed",
+      description: "No package-lock.json, yarn.lock, or pnpm-lock.yaml allowed",
       async check(ctx) {
-        const wrongLockfiles = [
-          "package-lock.json",
-          "yarn.lock",
-          "pnpm-lock.yaml",
-        ];
+        const wrongLockfiles = ["package-lock.json", "yarn.lock", "pnpm-lock.yaml"];
 
         for (const lockfile of wrongLockfiles) {
           try {
@@ -41,8 +36,7 @@ export default {
       },
     },
     "no-legacy-runtime-deps": {
-      description:
-        "No ts-node, nodemon, or tsx in dependencies — bun replaces them",
+      description: "No ts-node, nodemon, or tsx in dependencies — bun replaces them",
       async check(ctx) {
         const bannedDeps = ["ts-node", "nodemon", "tsx"];
         const pkgFiles = await ctx.glob("**/package.json");

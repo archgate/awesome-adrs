@@ -38,11 +38,7 @@ export default {
             const tableBlock = content.slice(tableStart, tableEnd + 1);
 
             // Check for text("id").primaryKey() pattern
-            if (
-              !/text\s*\(\s*["']id["']\s*\)\s*\.primaryKey\s*\(\s*\)/.test(
-                tableBlock,
-              )
-            ) {
+            if (!/text\s*\(\s*["']id["']\s*\)\s*\.primaryKey\s*\(\s*\)/.test(tableBlock)) {
               ctx.report.violation({
                 message: `${file}: Table "${tableName}" must use text("id").primaryKey() for UUID v7 primary keys`,
                 file,

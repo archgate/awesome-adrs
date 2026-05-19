@@ -8,8 +8,7 @@ export default {
         const packageDirs = await ctx.glob("packages/*/");
         if (packageDirs.length === 0) {
           ctx.report.violation({
-            message:
-              "No packages/ directory found — all source code must live under packages/",
+            message: "No packages/ directory found — all source code must live under packages/",
             file: "packages",
             fix: "Create a packages/ directory and place all project source code inside it",
           });
@@ -17,8 +16,7 @@ export default {
       },
     },
     "no-root-src": {
-      description:
-        "No src/ directory at root level — source code belongs in packages/",
+      description: "No src/ directory at root level — source code belongs in packages/",
       async check(ctx) {
         const rootSrcFiles = await ctx.glob("src/**/*.{ts,tsx,py}");
         for (const file of rootSrcFiles) {

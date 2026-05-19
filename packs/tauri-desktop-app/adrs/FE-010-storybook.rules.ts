@@ -3,14 +3,11 @@
 export default {
   rules: {
     "storybook-in-devdeps": {
-      description:
-        "Storybook must be listed in the frontend package devDependencies",
+      description: "Storybook must be listed in the frontend package devDependencies",
       async check(ctx) {
         let pkg: { devDependencies?: Record<string, string> };
         try {
-          pkg = (await ctx.readJSON(
-            "packages/frontend/package.json",
-          )) as typeof pkg;
+          pkg = (await ctx.readJSON("packages/frontend/package.json")) as typeof pkg;
         } catch {
           // No frontend package.json found — skip
           return;
@@ -33,9 +30,7 @@ export default {
       description:
         "Presentational component .tsx files must have corresponding colocated .stories.tsx files",
       async check(ctx) {
-        const componentFiles = await ctx.glob(
-          "packages/frontend/src/components/**/*.tsx",
-        );
+        const componentFiles = await ctx.glob("packages/frontend/src/components/**/*.tsx");
 
         for (const file of componentFiles) {
           // Skip non-component files
@@ -49,8 +44,7 @@ export default {
           if (file.includes("/atoms/")) continue;
 
           // Skip type-only files
-          if (file.endsWith(".types.tsx") || file.endsWith("/types.tsx"))
-            continue;
+          if (file.endsWith(".types.tsx") || file.endsWith("/types.tsx")) continue;
 
           const storyFile = file.replace(/\.tsx$/, ".stories.tsx");
           let storyExists = false;
@@ -63,10 +57,7 @@ export default {
 
           // For Connected components, also check if the base component has a story
           if (!storyExists && file.includes("Connected")) {
-            const baseStoryFile = file.replace(
-              /Connected\.tsx$/,
-              ".stories.tsx",
-            );
+            const baseStoryFile = file.replace(/Connected\.tsx$/, ".stories.tsx");
             try {
               await ctx.readFile(baseStoryFile);
               storyExists = true;

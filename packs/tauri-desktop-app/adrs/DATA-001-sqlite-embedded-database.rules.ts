@@ -3,8 +3,7 @@
 export default {
   rules: {
     "sqlite-dependency-required": {
-      description:
-        "Project must use better-sqlite3 or @libsql/client as SQLite driver",
+      description: "Project must use better-sqlite3 or @libsql/client as SQLite driver",
       async check(ctx) {
         const pkg = await ctx.readJSON("package.json");
         const allDeps = {
@@ -12,8 +11,7 @@ export default {
           ...pkg.devDependencies,
         };
 
-        const hasSqliteDriver =
-          "better-sqlite3" in allDeps || "@libsql/client" in allDeps;
+        const hasSqliteDriver = "better-sqlite3" in allDeps || "@libsql/client" in allDeps;
 
         if (!hasSqliteDriver) {
           ctx.report.warning({
@@ -26,8 +24,7 @@ export default {
       },
     },
     "no-server-database-deps": {
-      description:
-        "Project must not depend on server-based database clients (pg, mysql2, mongodb)",
+      description: "Project must not depend on server-based database clients (pg, mysql2, mongodb)",
       async check(ctx) {
         const pkg = await ctx.readJSON("package.json");
         const allDeps = {

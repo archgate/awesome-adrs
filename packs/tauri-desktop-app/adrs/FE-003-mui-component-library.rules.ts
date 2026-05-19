@@ -8,13 +8,10 @@ export default {
       async check(ctx) {
         let pkg: Record<string, unknown>;
         try {
-          pkg = (await ctx.readJSON(
-            "packages/frontend/package.json",
-          )) as Record<string, unknown>;
+          pkg = (await ctx.readJSON("packages/frontend/package.json")) as Record<string, unknown>;
         } catch {
           ctx.report.warning({
-            message:
-              "packages/frontend/package.json not found — cannot verify MUI dependency",
+            message: "packages/frontend/package.json not found — cannot verify MUI dependency",
             file: "packages/frontend/package.json",
           });
           return;
@@ -26,8 +23,7 @@ export default {
 
         if (!allDeps["@mui/material"]) {
           ctx.report.violation({
-            message:
-              "packages/frontend/package.json does not list @mui/material as a dependency",
+            message: "packages/frontend/package.json does not list @mui/material as a dependency",
             file: "packages/frontend/package.json",
             fix: 'Add "@mui/material" to dependencies in packages/frontend/package.json',
           });

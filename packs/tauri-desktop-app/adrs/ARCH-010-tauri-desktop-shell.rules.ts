@@ -3,8 +3,7 @@
 export default {
   rules: {
     "tauri-config-exists": {
-      description:
-        "Tauri configuration file must exist in packages/desktop/src-tauri/",
+      description: "Tauri configuration file must exist in packages/desktop/src-tauri/",
       async check(ctx) {
         const configFiles = [
           ...(await ctx.glob("packages/desktop/src-tauri/tauri.conf.json")),
@@ -22,8 +21,7 @@ export default {
       },
     },
     "tauri-dependencies": {
-      description:
-        "@tauri-apps/cli and @tauri-apps/api must be present in workspace dependencies",
+      description: "@tauri-apps/cli and @tauri-apps/api must be present in workspace dependencies",
       async check(ctx) {
         const pkgFiles = [
           ...(await ctx.glob("package.json")),
@@ -73,8 +71,7 @@ export default {
       },
     },
     "no-electron": {
-      description:
-        "No Electron or alternative desktop shell frameworks are permitted",
+      description: "No Electron or alternative desktop shell frameworks are permitted",
       async check(ctx) {
         const banned = ["electron", "electron-builder", "nw", "neutralino"];
         const pkgFiles = await ctx.glob("**/package.json");

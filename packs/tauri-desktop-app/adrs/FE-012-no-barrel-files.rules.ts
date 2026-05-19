@@ -20,8 +20,7 @@ export default {
 
         for (const file of indexFiles) {
           // Exclude route index files (TanStack Router file-based routes)
-          if (file.includes("/routes/") || file.includes("\\routes\\"))
-            continue;
+          if (file.includes("/routes/") || file.includes("\\routes\\")) continue;
 
           // Exclude src/main.tsx-style entry points (though they wouldn't be index.ts)
           // main.tsx is not named index, so no exclusion needed
@@ -33,9 +32,7 @@ export default {
             continue;
           }
 
-          const isBarrel = RE_EXPORT_PATTERNS.some((pattern) =>
-            pattern.test(content),
-          );
+          const isBarrel = RE_EXPORT_PATTERNS.some((pattern) => pattern.test(content));
 
           if (isBarrel) {
             ctx.report.violation({

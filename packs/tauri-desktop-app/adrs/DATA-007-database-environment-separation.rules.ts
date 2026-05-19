@@ -9,18 +9,13 @@ export default {
         const tsFiles = await ctx.glob("packages/datamodels/**/src/**/*.ts");
 
         for (const file of tsFiles) {
-          const content = await ctx.readFile(file);
-
           // Skip test files and migration files
           if (file.includes(".test.") || file.includes(".spec.") || file.includes("/drizzle/")) {
             continue;
           }
 
           // Check for hardcoded .db file paths (e.g., "./data.db", "/path/to/file.db")
-          const hardcodedDbMatches = await ctx.grep(
-            file,
-            /["'][^"']*\.db["']/,
-          );
+          const hardcodedDbMatches = await ctx.grep(file, /["'][^"']*\.db["']/);
 
           for (const match of hardcodedDbMatches) {
             // Allow :memory: and patterns that are clearly env-based defaults

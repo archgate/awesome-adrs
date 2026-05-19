@@ -9,28 +9,24 @@ export default {
         // Check that the backend package.json has hono as a dependency
         let backendPkg: Record<string, unknown> | undefined;
         try {
-          backendPkg = (await ctx.readJSON(
-            "packages/backend/package.json",
-          )) as Record<string, unknown>;
+          backendPkg = (await ctx.readJSON("packages/backend/package.json")) as Record<
+            string,
+            unknown
+          >;
         } catch {
           ctx.report.warning({
-            message:
-              "packages/backend/package.json not found — cannot verify hono dependency",
+            message: "packages/backend/package.json not found — cannot verify hono dependency",
             file: "packages/backend/package.json",
           });
           return;
         }
 
         const deps = (backendPkg.dependencies ?? {}) as Record<string, string>;
-        const devDeps = (backendPkg.devDependencies ?? {}) as Record<
-          string,
-          string
-        >;
+        const devDeps = (backendPkg.devDependencies ?? {}) as Record<string, string>;
 
         if (!deps["hono"] && !devDeps["hono"]) {
           ctx.report.violation({
-            message:
-              "packages/backend/package.json does not list hono as a dependency",
+            message: "packages/backend/package.json does not list hono as a dependency",
             file: "packages/backend/package.json",
             fix: 'Add "hono" to dependencies in packages/backend/package.json',
           });

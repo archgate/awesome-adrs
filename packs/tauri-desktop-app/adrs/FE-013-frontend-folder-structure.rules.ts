@@ -15,9 +15,7 @@ export default {
           if (files.length === 0) {
             // Also check if the directory simply exists but is empty
             // by looking for any file type
-            const anyFile = await ctx.glob(
-              `packages/frontend/src/${dir}/*`,
-            );
+            const anyFile = await ctx.glob(`packages/frontend/src/${dir}/*`);
 
             if (anyFile.length === 0) {
               ctx.report.violation({

@@ -17,8 +17,7 @@ export default {
       },
     },
     "no-wrong-linters": {
-      description:
-        "No ESLint, TSLint, Pylint, or Flake8 configs allowed — only Oxlint and Ruff",
+      description: "No ESLint, TSLint, Pylint, or Flake8 configs allowed — only Oxlint and Ruff",
       async check(ctx) {
         const forbiddenFiles = [
           ".eslintrc",

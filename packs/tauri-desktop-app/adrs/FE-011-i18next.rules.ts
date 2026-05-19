@@ -3,31 +3,27 @@
 export default {
   rules: {
     "i18next-in-deps": {
-      description:
-        "i18next and react-i18next must be listed in frontend dependencies",
+      description: "i18next and react-i18next must be listed in frontend dependencies",
       async check(ctx) {
         let pkg: {
           dependencies?: Record<string, string>;
           devDependencies?: Record<string, string>;
         };
         try {
-          pkg = (await ctx.readJSON(
-            "packages/frontend/package.json",
-          )) as typeof pkg;
+          pkg = (await ctx.readJSON("packages/frontend/package.json")) as typeof pkg;
         } catch {
           // No frontend package.json found — skip
           return;
         }
 
         const allDeps = {
-          ...(pkg.dependencies ?? {}),
-          ...(pkg.devDependencies ?? {}),
+          ...pkg.dependencies,
+          ...pkg.devDependencies,
         };
 
         if (!allDeps["i18next"]) {
           ctx.report.violation({
-            message:
-              "packages/frontend/package.json: Missing i18next in dependencies",
+            message: "packages/frontend/package.json: Missing i18next in dependencies",
             file: "packages/frontend/package.json",
             fix: "Add i18next to dependencies",
           });
@@ -35,8 +31,7 @@ export default {
 
         if (!allDeps["react-i18next"]) {
           ctx.report.violation({
-            message:
-              "packages/frontend/package.json: Missing react-i18next in dependencies",
+            message: "packages/frontend/package.json: Missing react-i18next in dependencies",
             file: "packages/frontend/package.json",
             fix: "Add react-i18next to dependencies",
           });
@@ -57,22 +52,12 @@ export default {
           return;
         }
 
-        function extractKeys(
-          obj: Record<string, unknown>,
-          prefix = "",
-        ): Set<string> {
+        function extractKeys(obj: Record<string, unknown>, prefix = ""): Set<string> {
           const keys = new Set<string>();
           for (const [key, value] of Object.entries(obj)) {
             const fullKey = prefix ? `${prefix}.${key}` : key;
-            if (
-              typeof value === "object" &&
-              value !== null &&
-              !Array.isArray(value)
-            ) {
-              for (const subKey of extractKeys(
-                value as Record<string, unknown>,
-                fullKey,
-              )) {
+            if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+              for (const subKey of extractKeys(value as Record<string, unknown>, fullKey)) {
                 keys.add(subKey);
               }
             } else {
@@ -129,9 +114,7 @@ export default {
               .filter(([, keys]) => keys.has(key))
               .map(([lang]) => lang);
 
-            const firstMissingLang = [...langKeys.entries()].find(
-              ([, keys]) => !keys.has(key),
-            );
+            const firstMissingLang = [...langKeys.entries()].find(([, keys]) => !keys.has(key));
             const file = firstMissingLang
               ? (langPaths.get(firstMissingLang[0]) ?? translationFiles[0])
               : translationFiles[0];

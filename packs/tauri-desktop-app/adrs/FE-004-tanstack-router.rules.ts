@@ -8,9 +8,7 @@ export default {
       async check(ctx) {
         let frontendPkg: PackageJson | undefined;
         try {
-          frontendPkg = await ctx.readJSON(
-            "packages/frontend/package.json",
-          ) as PackageJson;
+          frontendPkg = (await ctx.readJSON("packages/frontend/package.json")) as PackageJson;
         } catch {
           ctx.report.warning({
             message:

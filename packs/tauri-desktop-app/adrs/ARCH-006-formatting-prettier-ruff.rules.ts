@@ -40,8 +40,7 @@ export default {
       },
     },
     "no-wrong-formatters": {
-      description:
-        "No competing formatter configs allowed — only Prettier and Ruff",
+      description: "No competing formatter configs allowed — only Prettier and Ruff",
       async check(ctx) {
         const forbiddenFiles = [
           "biome.json",

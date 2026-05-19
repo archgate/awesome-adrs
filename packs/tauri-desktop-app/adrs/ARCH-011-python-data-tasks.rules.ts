@@ -3,8 +3,7 @@
 export default {
   rules: {
     "python-scope": {
-      description:
-        "Python files are only allowed in packages/jobs/ directory",
+      description: "Python files are only allowed in packages/jobs/ directory",
       async check(ctx) {
         const pyFiles = await ctx.glob("packages/**/*.py");
 
@@ -14,9 +13,7 @@ export default {
           if (file.includes("node_modules/")) continue;
           if (file.includes(".venv/")) continue;
 
-          const isAllowed = ALLOWED_PATTERNS.some((pattern) =>
-            pattern.test(file),
-          );
+          const isAllowed = ALLOWED_PATTERNS.some((pattern) => pattern.test(file));
           if (!isAllowed) {
             ctx.report.violation({
               message: `${file}: Python file found outside allowed directory (packages/jobs/ only)`,

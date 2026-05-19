@@ -3,8 +3,7 @@
 export default {
   rules: {
     "job-package-structure": {
-      description:
-        "Each job under packages/jobs/ must contain a pyproject.toml",
+      description: "Each job under packages/jobs/ must contain a pyproject.toml",
       async check(ctx) {
         const jobDirs = await ctx.glob("packages/jobs/*/pyproject.toml");
 
@@ -18,8 +17,7 @@ export default {
       },
     },
     "job-cli-argparse": {
-      description:
-        "Python job entry points must use argparse for CLI interface",
+      description: "Python job entry points must use argparse for CLI interface",
       async check(ctx) {
         const entryPoints = await ctx.glob("packages/jobs/*/src/main.py");
 

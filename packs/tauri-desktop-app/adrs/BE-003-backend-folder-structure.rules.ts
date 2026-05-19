@@ -12,11 +12,7 @@ export default {
         for (const file of allTsFiles) {
           const relativePath = file.replace(`${backendSrc}/`, "");
 
-          if (
-            relativePath.includes(".test.") ||
-            relativePath.includes(".spec.")
-          )
-            continue;
+          if (relativePath.includes(".test.") || relativePath.includes(".spec.")) continue;
           if (relativePath.startsWith("routes/")) continue;
           if (relativePath.startsWith("middlewares/")) continue;
           if (relativePath.startsWith("services/")) continue;
@@ -52,13 +48,9 @@ export default {
         for (const file of routeFiles) {
           if (file.includes(".test.") || file.includes(".spec.")) continue;
 
-          const moduleName = file
-            .replace(`${routesDir}/`, "")
-            .replace(/\.ts$/, "");
+          const moduleName = file.replace(`${routesDir}/`, "").replace(/\.ts$/, "");
 
-          const importPattern = new RegExp(
-            `from\\s+["']\\./routes/${moduleName}["']`,
-          );
+          const importPattern = new RegExp(`from\\s+["']\\./routes/${moduleName}["']`);
           if (!importPattern.test(indexContent)) {
             ctx.report.violation({
               message: `${file}: Route file is not imported in packages/backend/src/index.ts`,

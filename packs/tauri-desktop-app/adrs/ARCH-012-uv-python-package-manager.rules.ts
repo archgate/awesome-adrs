@@ -3,8 +3,7 @@
 export default {
   rules: {
     "pyproject-toml-exists": {
-      description:
-        "Python job packages must have a pyproject.toml file",
+      description: "Python job packages must have a pyproject.toml file",
       async check(ctx) {
         const pyFiles = await ctx.glob("packages/jobs/**/*.py");
         if (pyFiles.length === 0) return;

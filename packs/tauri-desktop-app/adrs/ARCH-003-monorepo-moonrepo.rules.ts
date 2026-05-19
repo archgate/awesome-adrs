@@ -16,8 +16,7 @@ export default {
       },
     },
     "no-competing-monorepo-tools": {
-      description:
-        "No nx.json, turbo.json, or lerna.json allowed — Moonrepo is the standard",
+      description: "No nx.json, turbo.json, or lerna.json allowed — Moonrepo is the standard",
       async check(ctx) {
         const forbiddenFiles = ["nx.json", "turbo.json", "lerna.json"];
 
@@ -36,8 +35,7 @@ export default {
       },
     },
     "no-package-scripts": {
-      description:
-        "Package.json must not have scripts — use moon.yml tasks instead",
+      description: "Package.json must not have scripts — use moon.yml tasks instead",
       async check(ctx) {
         const packageJsonFiles = [
           ...(await ctx.glob("packages/*/package.json")),

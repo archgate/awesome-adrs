@@ -3,8 +3,7 @@
 export default {
   rules: {
     "prototools-present": {
-      description:
-        ".prototools must exist and define bun, node, and python versions",
+      description: ".prototools must exist and define bun, node, and python versions",
       async check(ctx) {
         let content: string;
         try {

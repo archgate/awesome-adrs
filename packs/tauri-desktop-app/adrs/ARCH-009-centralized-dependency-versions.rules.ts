@@ -3,20 +3,8 @@
 export default {
   rules: {
     "catalog-usage": {
-      description:
-        'All workspace dependencies must use "catalog:" or "workspace:" notation',
+      description: 'All workspace dependencies must use "catalog:" or "workspace:" notation',
       async check(ctx) {
-        const rootPkg = await ctx.readJSON("package.json");
-        const catalogKeys = new Set(
-          Object.keys(
-            (rootPkg as Record<string, unknown>).catalog ??
-              ((rootPkg.workspaces as Record<string, unknown>)?.catalog as
-                | Record<string, string>
-                | undefined) ??
-              {},
-          ),
-        );
-
         const packageJsonFiles = [
           ...(await ctx.glob("packages/*/package.json")),
           ...(await ctx.glob("packages/*/*/package.json")),
@@ -24,11 +12,7 @@ export default {
 
         for (const file of packageJsonFiles) {
           const pkg = await ctx.readJSON(file);
-          for (const depType of [
-            "dependencies",
-            "devDependencies",
-            "peerDependencies",
-          ]) {
+          for (const depType of ["dependencies", "devDependencies", "peerDependencies"]) {
             const deps = (pkg as Record<string, unknown>)[depType] as
               | Record<string, string>
               | undefined;
@@ -52,8 +36,7 @@ export default {
       },
     },
     "catalog-completeness": {
-      description:
-        "All catalog: references must resolve to entries in root package.json catalog",
+      description: "All catalog: references must resolve to entries in root package.json catalog",
       async check(ctx) {
         const rootPkg = await ctx.readJSON("package.json");
         const catalog =
@@ -62,9 +45,7 @@ export default {
             | Record<string, string>
             | undefined) ??
           {};
-        const catalogKeys = new Set(
-          Object.keys(catalog as Record<string, string>),
-        );
+        const catalogKeys = new Set(Object.keys(catalog as Record<string, string>));
 
         const packageJsonFiles = [
           ...(await ctx.glob("packages/*/package.json")),
@@ -73,11 +54,7 @@ export default {
 
         for (const file of packageJsonFiles) {
           const pkg = await ctx.readJSON(file);
-          for (const depType of [
-            "dependencies",
-            "devDependencies",
-            "peerDependencies",
-          ]) {
+          for (const depType of ["dependencies", "devDependencies", "peerDependencies"]) {
             const deps = (pkg as Record<string, unknown>)[depType] as
               | Record<string, string>
               | undefined;
@@ -87,10 +64,7 @@ export default {
               if (typeof version !== "string") continue;
               if (!version.startsWith("catalog:")) continue;
 
-              const catalogRef =
-                version === "catalog:"
-                  ? name
-                  : version.slice("catalog:".length);
+              const catalogRef = version === "catalog:" ? name : version.slice("catalog:".length);
 
               if (!catalogKeys.has(catalogRef)) {
                 ctx.report.violation({

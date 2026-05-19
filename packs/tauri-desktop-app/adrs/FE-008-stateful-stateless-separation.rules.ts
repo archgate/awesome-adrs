@@ -3,12 +3,9 @@
 export default {
   rules: {
     "connected-wrapper-existence": {
-      description:
-        "Connected wrappers must have a corresponding presentational component file",
+      description: "Connected wrappers must have a corresponding presentational component file",
       async check(ctx) {
-        const connectedFiles = await ctx.glob(
-          "packages/frontend/src/**/*Connected.tsx",
-        );
+        const connectedFiles = await ctx.glob("packages/frontend/src/**/*Connected.tsx");
 
         for (const file of connectedFiles) {
           if (file.includes(".stories.")) continue;

@@ -8,9 +8,7 @@ export default {
       async check(ctx) {
         let frontendPkg: PackageJson | undefined;
         try {
-          frontendPkg = await ctx.readJSON(
-            "packages/frontend/package.json",
-          ) as PackageJson;
+          frontendPkg = (await ctx.readJSON("packages/frontend/package.json")) as PackageJson;
         } catch {
           ctx.report.warning({
             message:
@@ -49,8 +47,7 @@ export default {
         const atomFiles = await ctx.glob("packages/frontend/src/atoms/**/*.ts");
         if (atomFiles.length > 0 && !allDeps["jotai"]) {
           ctx.report.violation({
-            message:
-              "packages/frontend has atom files but jotai is not listed as a dependency",
+            message: "packages/frontend has atom files but jotai is not listed as a dependency",
             file: "packages/frontend/package.json",
             fix: 'Add "jotai" to dependencies in packages/frontend/package.json',
           });

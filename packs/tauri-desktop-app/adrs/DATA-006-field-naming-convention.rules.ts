@@ -11,8 +11,7 @@ export default {
         const allFiles = [...schemaFiles, ...schemaDir];
 
         const SNAKE_CASE = /^[a-z][a-z0-9_]*$/;
-        const COLUMN_NAME_PATTERN =
-          /(?:text|integer|real|blob)\s*\(\s*["']([^"']+)["']/g;
+        const COLUMN_NAME_PATTERN = /(?:text|integer|real|blob)\s*\(\s*["']([^"']+)["']/g;
 
         for (const file of allFiles) {
           const content = await ctx.readFile(file);

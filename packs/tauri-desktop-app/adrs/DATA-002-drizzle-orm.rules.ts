@@ -37,12 +37,9 @@ export default {
       },
     },
     "sqlite-table-only": {
-      description:
-        "Schema files must use sqliteTable(), not pgTable() or mysqlTable()",
+      description: "Schema files must use sqliteTable(), not pgTable() or mysqlTable()",
       async check(ctx) {
-        const schemaFiles = await ctx.glob(
-          "packages/**/src/schema*.ts",
-        );
+        const schemaFiles = await ctx.glob("packages/**/src/schema*.ts");
 
         for (const file of schemaFiles) {
           const content = await ctx.readFile(file);

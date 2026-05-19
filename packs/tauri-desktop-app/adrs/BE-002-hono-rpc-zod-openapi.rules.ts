@@ -3,14 +3,14 @@
 export default {
   rules: {
     "zod-openapi-dependency": {
-      description:
-        "The backend package must depend on @hono/zod-openapi",
+      description: "The backend package must depend on @hono/zod-openapi",
       async check(ctx) {
         let backendPkg: Record<string, unknown>;
         try {
-          backendPkg = (await ctx.readJSON(
-            "packages/backend/package.json",
-          )) as Record<string, unknown>;
+          backendPkg = (await ctx.readJSON("packages/backend/package.json")) as Record<
+            string,
+            unknown
+          >;
         } catch {
           ctx.report.warning({
             message:
@@ -21,10 +21,7 @@ export default {
         }
 
         const deps = (backendPkg.dependencies ?? {}) as Record<string, string>;
-        const devDeps = (backendPkg.devDependencies ?? {}) as Record<
-          string,
-          string
-        >;
+        const devDeps = (backendPkg.devDependencies ?? {}) as Record<string, string>;
 
         if (!deps["@hono/zod-openapi"] && !devDeps["@hono/zod-openapi"]) {
           ctx.report.violation({
@@ -47,10 +44,8 @@ export default {
 
           const content = await ctx.readFile(file);
 
-          const importsOpenApi =
-            /from\s+["']@hono\/zod-openapi["']/.test(content);
-          const hasRawMethods =
-            /\.(?:get|post|put|delete|patch)\s*\(/.test(content);
+          const importsOpenApi = /from\s+["']@hono\/zod-openapi["']/.test(content);
+          const hasRawMethods = /\.(?:get|post|put|delete|patch)\s*\(/.test(content);
           const hasOpenApiCalls = /\.openapi\s*\(/.test(content);
 
           if (!importsOpenApi && hasRawMethods) {

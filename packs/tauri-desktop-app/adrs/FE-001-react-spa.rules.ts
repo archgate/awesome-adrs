@@ -8,13 +8,10 @@ export default {
       async check(ctx) {
         let pkg: Record<string, unknown>;
         try {
-          pkg = (await ctx.readJSON(
-            "packages/frontend/package.json",
-          )) as Record<string, unknown>;
+          pkg = (await ctx.readJSON("packages/frontend/package.json")) as Record<string, unknown>;
         } catch {
           ctx.report.warning({
-            message:
-              "packages/frontend/package.json not found — cannot verify React dependencies",
+            message: "packages/frontend/package.json not found — cannot verify React dependencies",
             file: "packages/frontend/package.json",
           });
           return;
@@ -27,8 +24,7 @@ export default {
         // Check for react and react-dom
         if (!allDeps["react"]) {
           ctx.report.violation({
-            message:
-              "packages/frontend/package.json does not list react as a dependency",
+            message: "packages/frontend/package.json does not list react as a dependency",
             file: "packages/frontend/package.json",
             fix: 'Add "react" to dependencies in packages/frontend/package.json',
           });
@@ -36,8 +32,7 @@ export default {
 
         if (!allDeps["react-dom"]) {
           ctx.report.violation({
-            message:
-              "packages/frontend/package.json does not list react-dom as a dependency",
+            message: "packages/frontend/package.json does not list react-dom as a dependency",
             file: "packages/frontend/package.json",
             fix: 'Add "react-dom" to dependencies in packages/frontend/package.json',
           });
@@ -74,10 +69,7 @@ export default {
         const tsxFiles = await ctx.glob("packages/frontend/**/*.tsx");
 
         for (const file of tsxFiles) {
-          const matches = await ctx.grep(
-            file,
-            /class\s+\w+\s+extends\s+(\w+\.)?Component/,
-          );
+          const matches = await ctx.grep(file, /class\s+\w+\s+extends\s+(\w+\.)?Component/);
 
           for (const match of matches) {
             ctx.report.violation({

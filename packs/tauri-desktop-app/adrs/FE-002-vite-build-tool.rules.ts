@@ -3,18 +3,14 @@
 export default {
   rules: {
     "vite-dependency-required": {
-      description:
-        "Frontend must have vite in devDependencies; no webpack/parcel configs allowed",
+      description: "Frontend must have vite in devDependencies; no webpack/parcel configs allowed",
       async check(ctx) {
         let pkg: Record<string, unknown>;
         try {
-          pkg = (await ctx.readJSON(
-            "packages/frontend/package.json",
-          )) as Record<string, unknown>;
+          pkg = (await ctx.readJSON("packages/frontend/package.json")) as Record<string, unknown>;
         } catch {
           ctx.report.warning({
-            message:
-              "packages/frontend/package.json not found — cannot verify Vite dependency",
+            message: "packages/frontend/package.json not found — cannot verify Vite dependency",
             file: "packages/frontend/package.json",
           });
           return;
@@ -26,8 +22,7 @@ export default {
 
         if (!allDeps["vite"]) {
           ctx.report.violation({
-            message:
-              "packages/frontend/package.json does not list vite as a dependency",
+            message: "packages/frontend/package.json does not list vite as a dependency",
             file: "packages/frontend/package.json",
             fix: 'Add "vite" to devDependencies in packages/frontend/package.json',
           });
@@ -62,9 +57,7 @@ export default {
         }
 
         // Also check that no webpack/parcel configs exist
-        const webpackConfigs = await ctx.glob(
-          "packages/frontend/webpack.config.*",
-        );
+        const webpackConfigs = await ctx.glob("packages/frontend/webpack.config.*");
         const parcelConfigs = await ctx.glob("packages/frontend/.parcelrc");
 
         for (const cfg of [...webpackConfigs, ...parcelConfigs]) {
