@@ -1,0 +1,9 @@
+name: i18next-react
+version: 0.1.0
+description: Internationalization with i18next and react-i18next — type-safe translations with bundled JSON files.
+maintainers:
+  - github: rhuan-barreto
+tags:
+  - framework:react
+  - library:i18next
+  - language:typescript

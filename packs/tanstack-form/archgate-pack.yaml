@@ -1,0 +1,9 @@
+name: tanstack-form
+version: 0.1.0
+description: Form management with TanStack Form — type-safe forms with Zod validation and controlled state.
+maintainers:
+  - github: rhuan-barreto
+tags:
+  - framework:react
+  - library:tanstack-form
+  - language:typescript

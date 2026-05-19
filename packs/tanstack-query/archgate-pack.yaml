@@ -1,0 +1,9 @@
+name: tanstack-query
+version: 0.1.0
+description: Server state management with TanStack Query — caching, background refetching, and optimistic updates.
+maintainers:
+  - github: rhuan-barreto
+tags:
+  - framework:react
+  - library:tanstack-query
+  - language:typescript
