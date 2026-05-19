@@ -1,0 +1,16 @@
+name: tauri-desktop-app
+version: 0.1.0
+description: Full-stack architecture for data-driven desktop apps — Tauri v2, Hono BFF, SQLite + Drizzle, React 19 + MUI + TanStack, Bun, Moonrepo.
+maintainers:
+  - github: rhuan-barreto
+tags:
+  - stack:desktop
+  - framework:tauri
+  - framework:react
+  - framework:hono
+  - runtime:bun
+  - language:typescript
+  - language:python
+  - database:sqlite
+  - orm:drizzle
+  - build:moonrepo
