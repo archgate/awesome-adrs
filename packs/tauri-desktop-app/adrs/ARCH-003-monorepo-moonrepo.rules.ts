@@ -42,18 +42,20 @@ export default {
           ...(await ctx.glob("packages/*/*/package.json")),
         ];
 
-        for (const file of packageJsonFiles) {
-          const pkg = (await ctx.readJSON(file)) as {
-            scripts?: Record<string, string>;
-          };
-          if (pkg.scripts && Object.keys(pkg.scripts).length > 0) {
-            ctx.report.violation({
-              message: `${file}: has "scripts" field — use moon.yml tasks instead`,
-              file,
-              fix: 'Move scripts to moon.yml tasks and remove the "scripts" field from package.json',
-            });
-          }
-        }
+        await Promise.all(
+          packageJsonFiles.map(async (file) => {
+            const pkg = (await ctx.readJSON(file)) as {
+              scripts?: Record<string, string>;
+            };
+            if (pkg.scripts && Object.keys(pkg.scripts).length > 0) {
+              ctx.report.violation({
+                message: `${file}: has "scripts" field — use moon.yml tasks instead`,
+                file,
+                fix: 'Move scripts to moon.yml tasks and remove the "scripts" field from package.json',
+              });
+            }
+          }),
+        );
       },
     },
     "moon-configs": {
@@ -64,18 +66,20 @@ export default {
           ...(await ctx.glob("packages/*/*/package.json")),
         ];
 
-        for (const file of packageJsonFiles) {
-          const moonYmlPath = file.replace("/package.json", "/moon.yml");
-          try {
-            await ctx.readFile(moonYmlPath);
-          } catch {
-            ctx.report.violation({
-              message: `${moonYmlPath}: missing moon.yml`,
-              file: moonYmlPath,
-              fix: "Create a moon.yml file for this package with appropriate task definitions",
-            });
-          }
-        }
+        await Promise.all(
+          packageJsonFiles.map(async (file) => {
+            const moonYmlPath = file.replace("/package.json", "/moon.yml");
+            try {
+              await ctx.readFile(moonYmlPath);
+            } catch {
+              ctx.report.violation({
+                message: `${moonYmlPath}: missing moon.yml`,
+                file: moonYmlPath,
+                fix: "Create a moon.yml file for this package with appropriate task definitions",
+              });
+            }
+          }),
+        );
       },
     },
   },

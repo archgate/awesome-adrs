@@ -41,29 +41,31 @@ export default {
         const bannedDeps = ["ts-node", "nodemon", "tsx"];
         const pkgFiles = await ctx.glob("**/package.json");
 
-        for (const pkgFile of pkgFiles) {
-          let pkg: Record<string, unknown>;
-          try {
-            pkg = (await ctx.readJSON(pkgFile)) as Record<string, unknown>;
-          } catch {
-            continue;
-          }
-
-          const allDeps = {
-            ...((pkg.dependencies ?? {}) as Record<string, string>),
-            ...((pkg.devDependencies ?? {}) as Record<string, string>),
-          };
-
-          for (const dep of bannedDeps) {
-            if (allDeps[dep]) {
-              ctx.report.violation({
-                message: `${pkgFile}: contains banned dependency "${dep}" — bun replaces it`,
-                file: pkgFile,
-                fix: `Remove "${dep}" from dependencies and use "bun --watch" instead`,
-              });
+        await Promise.all(
+          pkgFiles.map(async (pkgFile) => {
+            let pkg: Record<string, unknown>;
+            try {
+              pkg = (await ctx.readJSON(pkgFile)) as Record<string, unknown>;
+            } catch {
+              return;
             }
-          }
-        }
+
+            const allDeps = {
+              ...((pkg.dependencies ?? {}) as Record<string, string>),
+              ...((pkg.devDependencies ?? {}) as Record<string, string>),
+            };
+
+            for (const dep of bannedDeps) {
+              if (allDeps[dep]) {
+                ctx.report.violation({
+                  message: `${pkgFile}: contains banned dependency "${dep}" — bun replaces it`,
+                  file: pkgFile,
+                  fix: `Remove "${dep}" from dependencies and use "bun --watch" instead`,
+                });
+              }
+            }
+          }),
+        );
       },
     },
   },

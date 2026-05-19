@@ -37,26 +37,34 @@ export default {
         ];
 
         // Check repo root
-        for (const file of forbiddenFiles) {
-          try {
-            await ctx.readFile(file);
-            ctx.report.violation({
-              message: `Forbidden linter config at root: ${file}`,
-              file,
-              fix: "Remove this file — use Oxlint for JS/TS and Ruff for Python",
-            });
-          } catch {
-            // Doesn't exist — good
-          }
-        }
+        await Promise.all(
+          forbiddenFiles.map(async (file) => {
+            try {
+              await ctx.readFile(file);
+              ctx.report.violation({
+                message: `Forbidden linter config at root: ${file}`,
+                file,
+                fix: "Remove this file — use Oxlint for JS/TS and Ruff for Python",
+              });
+            } catch {
+              // Doesn't exist — good
+            }
+          }),
+        );
 
         // Check inside packages
         const packageDirs = [
           ...(await ctx.glob("packages/*/")),
           ...(await ctx.glob("packages/*/*/")),
         ];
+        const packageChecks: Array<{ dir: string; file: string }> = [];
         for (const dir of packageDirs) {
           for (const file of forbiddenFiles) {
+            packageChecks.push({ dir, file });
+          }
+        }
+        await Promise.all(
+          packageChecks.map(async ({ dir, file }) => {
             const fullPath = `${dir}${file}`;
             try {
               await ctx.readFile(fullPath);
@@ -68,8 +76,8 @@ export default {
             } catch {
               // Doesn't exist — good
             }
-          }
-        }
+          }),
+        );
       },
     },
   },

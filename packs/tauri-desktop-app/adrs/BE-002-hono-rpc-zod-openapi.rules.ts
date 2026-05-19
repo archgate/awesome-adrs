@@ -41,31 +41,35 @@ export default {
           /[\\/]src[\\/]routes[\\/][^\\/]+\.ts$/.test(f),
         );
 
-        for (const file of routeFiles) {
-          if (file.includes(".test.") || file.includes(".spec.")) continue;
+        const filteredRouteFiles = routeFiles.filter(
+          (file) => !file.includes(".test.") && !file.includes(".spec."),
+        );
 
-          const content = await ctx.readFile(file);
+        await Promise.all(
+          filteredRouteFiles.map(async (file) => {
+            const content = await ctx.readFile(file);
 
-          const importsOpenApi = /from\s+["']@hono\/zod-openapi["']/.test(content);
-          const hasRawMethods = /\.(?:get|post|put|delete|patch)\s*\(/.test(content);
-          const hasOpenApiCalls = /\.openapi\s*\(/.test(content);
+            const importsOpenApi = /from\s+["']@hono\/zod-openapi["']/.test(content);
+            const hasRawMethods = /\.(?:get|post|put|delete|patch)\s*\(/.test(content);
+            const hasOpenApiCalls = /\.openapi\s*\(/.test(content);
 
-          if (!importsOpenApi && hasRawMethods) {
-            ctx.report.violation({
-              message: `${file}: Route file uses raw HTTP methods without importing @hono/zod-openapi`,
-              file,
-              fix: "Import from @hono/zod-openapi and use createRoute() with .openapi() instead of raw .get()/.post()",
-            });
-          }
+            if (!importsOpenApi && hasRawMethods) {
+              ctx.report.violation({
+                message: `${file}: Route file uses raw HTTP methods without importing @hono/zod-openapi`,
+                file,
+                fix: "Import from @hono/zod-openapi and use createRoute() with .openapi() instead of raw .get()/.post()",
+              });
+            }
 
-          if (importsOpenApi && hasRawMethods && !hasOpenApiCalls) {
-            ctx.report.violation({
-              message: `${file}: Route file imports @hono/zod-openapi but uses raw HTTP methods instead of .openapi()`,
-              file,
-              fix: "Replace raw .get()/.post() calls with createRoute() and .openapi() route definitions",
-            });
-          }
-        }
+            if (importsOpenApi && hasRawMethods && !hasOpenApiCalls) {
+              ctx.report.violation({
+                message: `${file}: Route file imports @hono/zod-openapi but uses raw HTTP methods instead of .openapi()`,
+                file,
+                fix: "Replace raw .get()/.post() calls with createRoute() and .openapi() route definitions",
+              });
+            }
+          }),
+        );
       },
     },
   },

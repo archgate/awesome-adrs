@@ -22,30 +22,30 @@ export default {
           /export\s*\{\s*default\s*\}\s*from\s/,
         ];
 
-        for (const file of indexFiles) {
-          // Exclude route index files (TanStack Router file-based routes)
-          if (file.includes("/routes/") || file.includes("\\routes\\")) continue;
+        const filesToCheck = indexFiles.filter(
+          (file) => !file.includes("/routes/") && !file.includes("\\routes\\"),
+        );
 
-          // Exclude src/main.tsx-style entry points (though they wouldn't be index.ts)
-          // main.tsx is not named index, so no exclusion needed
+        await Promise.all(
+          filesToCheck.map(async (file) => {
+            let content: string;
+            try {
+              content = await ctx.readFile(file);
+            } catch {
+              return;
+            }
 
-          let content: string;
-          try {
-            content = await ctx.readFile(file);
-          } catch {
-            continue;
-          }
+            const isBarrel = RE_EXPORT_PATTERNS.some((pattern) => pattern.test(content));
 
-          const isBarrel = RE_EXPORT_PATTERNS.some((pattern) => pattern.test(content));
-
-          if (isBarrel) {
-            ctx.report.violation({
-              message: `${file}: Barrel file detected — index files must not re-export from other modules`,
-              file,
-              fix: "Remove the barrel file and update imports to reference the actual source files directly",
-            });
-          }
-        }
+            if (isBarrel) {
+              ctx.report.violation({
+                message: `${file}: Barrel file detected — index files must not re-export from other modules`,
+                file,
+                fix: "Remove the barrel file and update imports to reference the actual source files directly",
+              });
+            }
+          }),
+        );
       },
     },
   },

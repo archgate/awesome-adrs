@@ -13,23 +13,25 @@ export default {
         );
 
         const SNAKE_CASE = /^[a-z][a-z0-9_]*$/;
-        const COLUMN_NAME_PATTERN = /(?:text|integer|real|blob)\s*\(\s*["']([^"']+)["']/g;
 
-        for (const file of allFiles) {
-          const content = await ctx.readFile(file);
-          let match;
+        await Promise.all(
+          allFiles.map(async (file) => {
+            const content = await ctx.readFile(file);
+            const localPattern = /(?:text|integer|real|blob)\s*\(\s*["']([^"']+)["']/g;
+            let match;
 
-          while ((match = COLUMN_NAME_PATTERN.exec(content)) !== null) {
-            const colName = match[1];
-            if (!SNAKE_CASE.test(colName)) {
-              ctx.report.violation({
-                message: `${file}: Column name "${colName}" is not snake_case`,
-                file,
-                fix: `Rename column "${colName}" to snake_case format (e.g., "${colName.replace(/([A-Z])/g, "_$1").toLowerCase()}")`,
-              });
+            while ((match = localPattern.exec(content)) !== null) {
+              const colName = match[1];
+              if (!SNAKE_CASE.test(colName)) {
+                ctx.report.violation({
+                  message: `${file}: Column name "${colName}" is not snake_case`,
+                  file,
+                  fix: `Rename column "${colName}" to snake_case format (e.g., "${colName.replace(/([A-Z])/g, "_$1").toLowerCase()}")`,
+                });
+              }
             }
-          }
-        }
+          }),
+        );
       },
     },
   },

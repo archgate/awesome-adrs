@@ -36,29 +36,31 @@ export default {
         const banned = ["express", "fastify", "@nestjs/core", "koa"];
         const pkgFiles = await ctx.glob("**/package.json");
 
-        for (const pkgFile of pkgFiles) {
-          let pkg: Record<string, unknown>;
-          try {
-            pkg = (await ctx.readJSON(pkgFile)) as Record<string, unknown>;
-          } catch {
-            continue;
-          }
-
-          const allDeps = {
-            ...((pkg.dependencies ?? {}) as Record<string, string>),
-            ...((pkg.devDependencies ?? {}) as Record<string, string>),
-          };
-
-          for (const framework of banned) {
-            if (allDeps[framework]) {
-              ctx.report.violation({
-                message: `${pkgFile}: contains banned framework dependency "${framework}"`,
-                file: pkgFile,
-                fix: `Remove "${framework}" and use hono instead`,
-              });
+        await Promise.all(
+          pkgFiles.map(async (pkgFile) => {
+            let pkg: Record<string, unknown>;
+            try {
+              pkg = (await ctx.readJSON(pkgFile)) as Record<string, unknown>;
+            } catch {
+              return;
             }
-          }
-        }
+
+            const allDeps = {
+              ...((pkg.dependencies ?? {}) as Record<string, string>),
+              ...((pkg.devDependencies ?? {}) as Record<string, string>),
+            };
+
+            for (const framework of banned) {
+              if (allDeps[framework]) {
+                ctx.report.violation({
+                  message: `${pkgFile}: contains banned framework dependency "${framework}"`,
+                  file: pkgFile,
+                  fix: `Remove "${framework}" and use hono instead`,
+                });
+              }
+            }
+          }),
+        );
       },
     },
   },

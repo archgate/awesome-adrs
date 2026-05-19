@@ -66,19 +66,18 @@ export default {
       description:
         "No class components allowed in frontend .tsx files — use function components with hooks",
       async check(ctx) {
-        const tsxFiles = ctx.scopedFiles.filter((f) => f.endsWith(".tsx"));
+        const matches = await ctx.grepFiles(
+          /class\s+\w+\s+extends\s+(\w+\.)?Component/,
+          "packages/frontend/**/*.tsx",
+        );
 
-        for (const file of tsxFiles) {
-          const matches = await ctx.grep(file, /class\s+\w+\s+extends\s+(\w+\.)?Component/);
-
-          for (const match of matches) {
-            ctx.report.violation({
-              message: `${file}:${match.line}: Class component found. Use function components with hooks instead.`,
-              file,
-              line: match.line,
-              fix: "Convert to a function component using hooks (useState, useEffect, etc.).",
-            });
-          }
+        for (const match of matches) {
+          ctx.report.violation({
+            message: `${match.file}:${match.line}: Class component found. Use function components with hooks instead.`,
+            file: match.file,
+            line: match.line,
+            fix: "Convert to a function component using hooks (useState, useEffect, etc.).",
+          });
         }
       },
     },

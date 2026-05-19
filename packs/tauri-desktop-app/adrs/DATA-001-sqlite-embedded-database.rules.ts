@@ -50,17 +50,19 @@ export default {
       async check(ctx) {
         const configFiles = await ctx.glob("**/drizzle.config.ts");
 
-        for (const file of configFiles) {
-          const content = await ctx.readFile(file);
+        await Promise.all(
+          configFiles.map(async (file) => {
+            const content = await ctx.readFile(file);
 
-          if (!content.includes('"sqlite"') && !content.includes("'sqlite'")) {
-            ctx.report.violation({
-              message: `${file}: Drizzle config must use dialect: "sqlite".`,
-              file,
-              fix: 'Set dialect: "sqlite" in your drizzle.config.ts.',
-            });
-          }
-        }
+            if (!content.includes('"sqlite"') && !content.includes("'sqlite'")) {
+              ctx.report.violation({
+                message: `${file}: Drizzle config must use dialect: "sqlite".`,
+                file,
+                fix: 'Set dialect: "sqlite" in your drizzle.config.ts.',
+              });
+            }
+          }),
+        );
       },
     },
   },

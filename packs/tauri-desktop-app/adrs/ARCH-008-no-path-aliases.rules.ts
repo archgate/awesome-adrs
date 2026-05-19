@@ -46,30 +46,32 @@ export default {
           ...(await ctx.glob("packages/*/*/tsconfig.json")),
         ];
 
-        for (const file of tsconfigFiles) {
-          const text = await ctx.readFile(file);
-          const tsconfig = JSON.parse(stripJsonComments(text));
-          const paths = tsconfig.compilerOptions?.paths;
-          if (!paths) continue;
+        await Promise.all(
+          tsconfigFiles.map(async (file) => {
+            const text = await ctx.readFile(file);
+            const tsconfig = JSON.parse(stripJsonComments(text));
+            const paths = tsconfig.compilerOptions?.paths;
+            if (!paths) return;
 
-          for (const alias of Object.keys(paths)) {
-            // Allow workspace package name mappings (e.g., @project/*)
-            // Reject convenience aliases like @/, ~/, @components/, etc.
-            if (
-              alias === "@/*" ||
-              alias === "~/*" ||
-              alias.startsWith("@/") ||
-              alias.startsWith("~/") ||
-              (!alias.includes("/") && alias.endsWith("/*"))
-            ) {
-              ctx.report.violation({
-                message: `${file}: path alias "${alias}" is not allowed — only workspace package name mappings are permitted`,
-                file,
-                fix: `Remove the "${alias}" path alias and use relative imports instead`,
-              });
+            for (const alias of Object.keys(paths)) {
+              // Allow workspace package name mappings (e.g., @project/*)
+              // Reject convenience aliases like @/, ~/, @components/, etc.
+              if (
+                alias === "@/*" ||
+                alias === "~/*" ||
+                alias.startsWith("@/") ||
+                alias.startsWith("~/") ||
+                (!alias.includes("/") && alias.endsWith("/*"))
+              ) {
+                ctx.report.violation({
+                  message: `${file}: path alias "${alias}" is not allowed — only workspace package name mappings are permitted`,
+                  file,
+                  fix: `Remove the "${alias}" path alias and use relative imports instead`,
+                });
+              }
             }
-          }
-        }
+          }),
+        );
       },
     },
   },

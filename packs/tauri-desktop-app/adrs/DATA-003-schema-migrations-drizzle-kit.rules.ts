@@ -7,19 +7,21 @@ export default {
       async check(ctx) {
         const schemaFiles = ctx.scopedFiles.filter((f) => /[\\/]src[\\/]schema\.ts$/.test(f));
 
-        for (const schemaFile of schemaFiles) {
-          const packageRoot = schemaFile.replace("/src/schema.ts", "");
+        await Promise.all(
+          schemaFiles.map(async (schemaFile) => {
+            const packageRoot = schemaFile.replace("/src/schema.ts", "");
 
-          try {
-            await ctx.readFile(`${packageRoot}/drizzle.config.ts`);
-          } catch {
-            ctx.report.violation({
-              message: `${packageRoot}: Schema file exists but drizzle.config.ts is missing`,
-              file: schemaFile,
-              fix: "Create a drizzle.config.ts file to configure schema migrations",
-            });
-          }
-        }
+            try {
+              await ctx.readFile(`${packageRoot}/drizzle.config.ts`);
+            } catch {
+              ctx.report.violation({
+                message: `${packageRoot}: Schema file exists but drizzle.config.ts is missing`,
+                file: schemaFile,
+                fix: "Create a drizzle.config.ts file to configure schema migrations",
+              });
+            }
+          }),
+        );
       },
     },
     "migration-directory-exists": {
@@ -28,26 +30,28 @@ export default {
       async check(ctx) {
         const schemaFiles = ctx.scopedFiles.filter((f) => /[\\/]src[\\/]schema\.ts$/.test(f));
 
-        for (const schemaFile of schemaFiles) {
-          const packageRoot = schemaFile.replace("/src/schema.ts", "");
+        await Promise.all(
+          schemaFiles.map(async (schemaFile) => {
+            const packageRoot = schemaFile.replace("/src/schema.ts", "");
 
-          // Only check packages that have a drizzle config
-          try {
-            await ctx.readFile(`${packageRoot}/drizzle.config.ts`);
-          } catch {
-            continue;
-          }
+            // Only check packages that have a drizzle config
+            try {
+              await ctx.readFile(`${packageRoot}/drizzle.config.ts`);
+            } catch {
+              return;
+            }
 
-          const migrations = await ctx.glob(`${packageRoot}/drizzle/**/*.sql`);
+            const migrations = await ctx.glob(`${packageRoot}/drizzle/**/*.sql`);
 
-          if (migrations.length === 0) {
-            ctx.report.violation({
-              message: `${packageRoot}: Schema file exists but no SQL migrations found in drizzle/ directory`,
-              file: schemaFile,
-              fix: "Run drizzle-kit generate to create migrations from the schema",
-            });
-          }
-        }
+            if (migrations.length === 0) {
+              ctx.report.violation({
+                message: `${packageRoot}: Schema file exists but no SQL migrations found in drizzle/ directory`,
+                file: schemaFile,
+                fix: "Run drizzle-kit generate to create migrations from the schema",
+              });
+            }
+          }),
+        );
       },
     },
   },

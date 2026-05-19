@@ -29,25 +29,28 @@ export default {
           ...(await ctx.glob("packages/*/*/package.json")),
         ];
 
-        let hasCliDep = false;
-        let hasApiDep = false;
+        const results = await Promise.all(
+          pkgFiles.map(async (pkgFile) => {
+            let pkg: Record<string, unknown>;
+            try {
+              pkg = (await ctx.readJSON(pkgFile)) as Record<string, unknown>;
+            } catch {
+              return { hasCliDep: false, hasApiDep: false };
+            }
 
-        for (const pkgFile of pkgFiles) {
-          let pkg: Record<string, unknown>;
-          try {
-            pkg = (await ctx.readJSON(pkgFile)) as Record<string, unknown>;
-          } catch {
-            continue;
-          }
+            const allDeps = {
+              ...((pkg.dependencies ?? {}) as Record<string, string>),
+              ...((pkg.devDependencies ?? {}) as Record<string, string>),
+            };
 
-          const allDeps = {
-            ...((pkg.dependencies ?? {}) as Record<string, string>),
-            ...((pkg.devDependencies ?? {}) as Record<string, string>),
-          };
-
-          if (allDeps["@tauri-apps/cli"]) hasCliDep = true;
-          if (allDeps["@tauri-apps/api"]) hasApiDep = true;
-        }
+            return {
+              hasCliDep: !!allDeps["@tauri-apps/cli"],
+              hasApiDep: !!allDeps["@tauri-apps/api"],
+            };
+          }),
+        );
+        const hasCliDep = results.some((r) => r.hasCliDep);
+        const hasApiDep = results.some((r) => r.hasApiDep);
 
         if (!hasCliDep) {
           ctx.report.warning({
@@ -74,29 +77,31 @@ export default {
         const banned = ["electron", "electron-builder", "nw", "neutralino"];
         const pkgFiles = await ctx.glob("**/package.json");
 
-        for (const pkgFile of pkgFiles) {
-          let pkg: Record<string, unknown>;
-          try {
-            pkg = (await ctx.readJSON(pkgFile)) as Record<string, unknown>;
-          } catch {
-            continue;
-          }
-
-          const allDeps = {
-            ...((pkg.dependencies ?? {}) as Record<string, string>),
-            ...((pkg.devDependencies ?? {}) as Record<string, string>),
-          };
-
-          for (const framework of banned) {
-            if (allDeps[framework]) {
-              ctx.report.violation({
-                message: `${pkgFile}: contains banned desktop shell dependency "${framework}"`,
-                file: pkgFile,
-                fix: `Remove "${framework}" — Tauri v2 is the only permitted desktop shell`,
-              });
+        await Promise.all(
+          pkgFiles.map(async (pkgFile) => {
+            let pkg: Record<string, unknown>;
+            try {
+              pkg = (await ctx.readJSON(pkgFile)) as Record<string, unknown>;
+            } catch {
+              return;
             }
-          }
-        }
+
+            const allDeps = {
+              ...((pkg.dependencies ?? {}) as Record<string, string>),
+              ...((pkg.devDependencies ?? {}) as Record<string, string>),
+            };
+
+            for (const framework of banned) {
+              if (allDeps[framework]) {
+                ctx.report.violation({
+                  message: `${pkgFile}: contains banned desktop shell dependency "${framework}"`,
+                  file: pkgFile,
+                  fix: `Remove "${framework}" — Tauri v2 is the only permitted desktop shell`,
+                });
+              }
+            }
+          }),
+        );
       },
     },
   },

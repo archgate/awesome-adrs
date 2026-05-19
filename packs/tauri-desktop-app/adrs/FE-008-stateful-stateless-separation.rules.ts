@@ -9,27 +9,30 @@ export default {
           (f) => f.endsWith("Connected.tsx") && (f.includes("/src/") || f.includes("\\src\\")),
         );
 
-        for (const file of connectedFiles) {
-          if (file.includes(".stories.")) continue;
-          if (file.includes(".test.")) continue;
+        const filteredConnectedFiles = connectedFiles.filter(
+          (file) => !file.includes(".stories.") && !file.includes(".test."),
+        );
 
-          const content = await ctx.readFile(file);
+        await Promise.all(
+          filteredConnectedFiles.map(async (file) => {
+            const content = await ctx.readFile(file);
 
-          // Support ignore directive
-          if (/^\/\/\s*@no-presentational:/.test(content.trimStart())) continue;
+            // Support ignore directive
+            if (/^\/\/\s*@no-presentational:/.test(content.trimStart())) return;
 
-          const presentationalFile = file.replace(/Connected\.tsx$/, ".tsx");
+            const presentationalFile = file.replace(/Connected\.tsx$/, ".tsx");
 
-          try {
-            await ctx.readFile(presentationalFile);
-          } catch {
-            ctx.report.violation({
-              message: `${file}: Connected wrapper has no corresponding presentational component (expected ${presentationalFile}). Add "// @no-presentational: <reason>" as the first line to opt out.`,
-              file,
-              fix: `Create ${presentationalFile} as the presentational counterpart`,
-            });
-          }
-        }
+            try {
+              await ctx.readFile(presentationalFile);
+            } catch {
+              ctx.report.violation({
+                message: `${file}: Connected wrapper has no corresponding presentational component (expected ${presentationalFile}). Add "// @no-presentational: <reason>" as the first line to opt out.`,
+                file,
+                fix: `Create ${presentationalFile} as the presentational counterpart`,
+              });
+            }
+          }),
+        );
       },
     },
   },

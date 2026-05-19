@@ -8,30 +8,32 @@ export default {
       async check(ctx) {
         const pkgFiles = await ctx.glob("packages/**/package.json");
 
-        for (const pkgFile of pkgFiles) {
-          let pkg: Record<string, unknown>;
-          try {
-            pkg = (await ctx.readJSON(pkgFile)) as Record<string, unknown>;
-          } catch {
-            continue;
-          }
-
-          const deps = (pkg.dependencies ?? {}) as Record<string, string>;
-          const devDeps = (pkg.devDependencies ?? {}) as Record<string, string>;
-          const allDeps = { ...deps, ...devDeps };
-
-          // Check for banned ORMs in all packages
-          const banned = ["prisma", "@prisma/client", "typeorm", "sequelize", "knex"];
-          for (const orm of banned) {
-            if (allDeps[orm]) {
-              ctx.report.violation({
-                message: `${pkgFile}: contains banned ORM dependency "${orm}"`,
-                file: pkgFile,
-                fix: `Remove "${orm}" and use drizzle-orm instead`,
-              });
+        await Promise.all(
+          pkgFiles.map(async (pkgFile) => {
+            let pkg: Record<string, unknown>;
+            try {
+              pkg = (await ctx.readJSON(pkgFile)) as Record<string, unknown>;
+            } catch {
+              return;
             }
-          }
-        }
+
+            const deps = (pkg.dependencies ?? {}) as Record<string, string>;
+            const devDeps = (pkg.devDependencies ?? {}) as Record<string, string>;
+            const allDeps = { ...deps, ...devDeps };
+
+            // Check for banned ORMs in all packages
+            const banned = ["prisma", "@prisma/client", "typeorm", "sequelize", "knex"];
+            for (const orm of banned) {
+              if (allDeps[orm]) {
+                ctx.report.violation({
+                  message: `${pkgFile}: contains banned ORM dependency "${orm}"`,
+                  file: pkgFile,
+                  fix: `Remove "${orm}" and use drizzle-orm instead`,
+                });
+              }
+            }
+          }),
+        );
       },
     },
     "sqlite-table-only": {
@@ -39,25 +41,27 @@ export default {
       async check(ctx) {
         const schemaFiles = await ctx.glob("packages/**/src/schema*.ts");
 
-        for (const file of schemaFiles) {
-          const content = await ctx.readFile(file);
+        await Promise.all(
+          schemaFiles.map(async (file) => {
+            const content = await ctx.readFile(file);
 
-          if (/pgTable\s*\(/.test(content)) {
-            ctx.report.violation({
-              message: `${file}: Uses pgTable() instead of sqliteTable()`,
-              file,
-              fix: "Replace pgTable() with sqliteTable() from drizzle-orm/sqlite-core",
-            });
-          }
+            if (/pgTable\s*\(/.test(content)) {
+              ctx.report.violation({
+                message: `${file}: Uses pgTable() instead of sqliteTable()`,
+                file,
+                fix: "Replace pgTable() with sqliteTable() from drizzle-orm/sqlite-core",
+              });
+            }
 
-          if (/mysqlTable\s*\(/.test(content)) {
-            ctx.report.violation({
-              message: `${file}: Uses mysqlTable() instead of sqliteTable()`,
-              file,
-              fix: "Replace mysqlTable() with sqliteTable() from drizzle-orm/sqlite-core",
-            });
-          }
-        }
+            if (/mysqlTable\s*\(/.test(content)) {
+              ctx.report.violation({
+                message: `${file}: Uses mysqlTable() instead of sqliteTable()`,
+                file,
+                fix: "Replace mysqlTable() with sqliteTable() from drizzle-orm/sqlite-core",
+              });
+            }
+          }),
+        );
       },
     },
   },

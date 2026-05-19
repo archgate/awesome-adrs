@@ -75,21 +75,30 @@ export default {
         const langKeys = new Map<string, Set<string>>();
         const langPaths = new Map<string, string>();
 
-        for (const filePath of translationFiles) {
-          const lang = langFromPath(filePath);
-          langPaths.set(lang, filePath);
-          try {
-            const content = await ctx.readFile(filePath);
-            const json = JSON.parse(content) as Record<string, unknown>;
-            langKeys.set(lang, extractKeys(json));
-          } catch {
+        const langResults = await Promise.all(
+          translationFiles.map(async (filePath) => {
+            const lang = langFromPath(filePath);
+            try {
+              const content = await ctx.readFile(filePath);
+              const json = JSON.parse(content) as Record<string, unknown>;
+              return { lang, filePath, keys: extractKeys(json), error: false };
+            } catch {
+              return { lang, filePath, keys: new Set<string>(), error: true };
+            }
+          }),
+        );
+
+        for (const result of langResults) {
+          if (result.error) {
             ctx.report.violation({
-              message: `${filePath}: Could not read or parse translation file for "${lang}"`,
-              file: filePath,
-              fix: `Ensure ${filePath} exists and contains valid JSON`,
+              message: `${result.filePath}: Could not read or parse translation file for "${result.lang}"`,
+              file: result.filePath,
+              fix: `Ensure ${result.filePath} exists and contains valid JSON`,
             });
             return;
           }
+          langPaths.set(result.lang, result.filePath);
+          langKeys.set(result.lang, result.keys);
         }
 
         // Build union of all keys

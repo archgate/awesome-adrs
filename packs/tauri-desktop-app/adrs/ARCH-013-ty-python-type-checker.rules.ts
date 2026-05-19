@@ -28,25 +28,27 @@ export default {
         const pyprojectFiles = ctx.scopedFiles.filter(
           (f) => f.endsWith("/pyproject.toml") || f.endsWith("\\pyproject.toml"),
         );
-        for (const file of pyprojectFiles) {
-          const content = await ctx.readFile(file);
+        await Promise.all(
+          pyprojectFiles.map(async (file) => {
+            const content = await ctx.readFile(file);
 
-          if (content.includes("[tool.mypy]")) {
-            ctx.report.violation({
-              message: `${file}: contains [tool.mypy] configuration — ty is the mandatory type checker`,
-              file,
-              fix: "Remove [tool.mypy] section and use [tool.ty] instead",
-            });
-          }
+            if (content.includes("[tool.mypy]")) {
+              ctx.report.violation({
+                message: `${file}: contains [tool.mypy] configuration — ty is the mandatory type checker`,
+                file,
+                fix: "Remove [tool.mypy] section and use [tool.ty] instead",
+              });
+            }
 
-          if (content.includes("[tool.pyright]")) {
-            ctx.report.violation({
-              message: `${file}: contains [tool.pyright] configuration — ty is the mandatory type checker`,
-              file,
-              fix: "Remove [tool.pyright] section and use [tool.ty] instead",
-            });
-          }
-        }
+            if (content.includes("[tool.pyright]")) {
+              ctx.report.violation({
+                message: `${file}: contains [tool.pyright] configuration — ty is the mandatory type checker`,
+                file,
+                fix: "Remove [tool.pyright] section and use [tool.ty] instead",
+              });
+            }
+          }),
+        );
       },
     },
   },

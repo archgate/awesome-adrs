@@ -22,6 +22,7 @@ Manually managing versions (e.g., via README instructions) is not scalable. Usin
 - Tool version updates are made by changing the version in `.prototools` and committing the change.
 
 Example `.prototools` file:
+
 ```toml
 bun = "1.2.0"
 node = "22.0.0"

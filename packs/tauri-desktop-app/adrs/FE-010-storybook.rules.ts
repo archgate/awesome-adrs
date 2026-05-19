@@ -36,48 +36,48 @@ export default {
             (f.includes("/src/components/") || f.includes("\\src\\components\\")),
         );
 
-        for (const file of componentFiles) {
-          // Skip non-component files
-          if (file.includes(".stories.")) continue;
-          if (file.includes(".test.")) continue;
-          if (file.includes(".spec.")) continue;
+        const filesToCheck = componentFiles.filter((file) => {
+          if (file.includes(".stories.")) return false;
+          if (file.includes(".test.")) return false;
+          if (file.includes(".spec.")) return false;
+          if (file.includes("/hooks/")) return false;
+          if (file.includes("/queries/")) return false;
+          if (file.includes("/atoms/")) return false;
+          if (file.endsWith(".types.tsx") || file.endsWith("/types.tsx")) return false;
+          return true;
+        });
 
-          // Skip non-component directories
-          if (file.includes("/hooks/")) continue;
-          if (file.includes("/queries/")) continue;
-          if (file.includes("/atoms/")) continue;
-
-          // Skip type-only files
-          if (file.endsWith(".types.tsx") || file.endsWith("/types.tsx")) continue;
-
-          const storyFile = file.replace(/\.tsx$/, ".stories.tsx");
-          let storyExists = false;
-          try {
-            await ctx.readFile(storyFile);
-            storyExists = true;
-          } catch {
-            // Story file doesn't exist
-          }
-
-          // For Connected components, also check if the base component has a story
-          if (!storyExists && file.includes("Connected")) {
-            const baseStoryFile = file.replace(/Connected\.tsx$/, ".stories.tsx");
+        await Promise.all(
+          filesToCheck.map(async (file) => {
+            const storyFile = file.replace(/\.tsx$/, ".stories.tsx");
+            let storyExists = false;
             try {
-              await ctx.readFile(baseStoryFile);
+              await ctx.readFile(storyFile);
               storyExists = true;
             } catch {
-              // Base story file doesn't exist either
+              // Story file doesn't exist
             }
-          }
 
-          if (!storyExists) {
-            ctx.report.violation({
-              message: `${file}: Missing corresponding story file (expected ${storyFile})`,
-              file,
-              fix: `Create ${storyFile} with at least a Default story`,
-            });
-          }
-        }
+            // For Connected components, also check if the base component has a story
+            if (!storyExists && file.includes("Connected")) {
+              const baseStoryFile = file.replace(/Connected\.tsx$/, ".stories.tsx");
+              try {
+                await ctx.readFile(baseStoryFile);
+                storyExists = true;
+              } catch {
+                // Base story file doesn't exist either
+              }
+            }
+
+            if (!storyExists) {
+              ctx.report.violation({
+                message: `${file}: Missing corresponding story file (expected ${storyFile})`,
+                file,
+                fix: `Create ${storyFile} with at least a Default story`,
+              });
+            }
+          }),
+        );
       },
     },
   },

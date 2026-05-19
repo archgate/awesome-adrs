@@ -11,27 +11,31 @@ export default {
           (f) => f.endsWith(".ts") && f.startsWith(`${backendSrc}/`),
         );
 
-        for (const file of allTsFiles) {
+        const filesToCheck = allTsFiles.filter((file) => {
           const relativePath = file.replace(`${backendSrc}/`, "");
+          if (relativePath.includes(".test.") || relativePath.includes(".spec.")) return false;
+          if (relativePath.startsWith("routes/")) return false;
+          if (relativePath.startsWith("middlewares/")) return false;
+          if (relativePath.startsWith("services/")) return false;
+          return true;
+        });
 
-          if (relativePath.includes(".test.") || relativePath.includes(".spec.")) continue;
-          if (relativePath.startsWith("routes/")) continue;
-          if (relativePath.startsWith("middlewares/")) continue;
-          if (relativePath.startsWith("services/")) continue;
-
-          const content = await ctx.readFile(file);
-          if (
-            /\.get\s*\(/.test(content) &&
-            /\.post\s*\(/.test(content) &&
-            /new Hono|Hono\./.test(content)
-          ) {
-            ctx.report.violation({
-              message: `${file}: Route handler found outside src/routes/ directory`,
-              file,
-              fix: "Move route handler to packages/backend/src/routes/",
-            });
-          }
-        }
+        await Promise.all(
+          filesToCheck.map(async (file) => {
+            const content = await ctx.readFile(file);
+            if (
+              /\.get\s*\(/.test(content) &&
+              /\.post\s*\(/.test(content) &&
+              /new Hono|Hono\./.test(content)
+            ) {
+              ctx.report.violation({
+                message: `${file}: Route handler found outside src/routes/ directory`,
+                file,
+                fix: "Move route handler to packages/backend/src/routes/",
+              });
+            }
+          }),
+        );
       },
     },
     "route-registration": {

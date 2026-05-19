@@ -19,11 +19,13 @@ Bun is a modern, high-performance tool that serves as both a package manager and
 **Bun** is the official and mandatory package manager and TypeScript runtime for the project.
 
 As a **package manager**:
+
 - `bun install`, `bun add`, and `bun remove` are the only permitted package management commands.
 - `bun.lock` is the sole source of truth for locked dependencies and must be committed to version control.
 - No other lockfiles (`package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`) are permitted.
 
 As a **runtime**:
+
 - All TypeScript backend services must be executed directly by `bun` (e.g., `bun src/index.ts`).
 - The Vite development server must be launched using `bun` as its runtime.
 - `bun --watch` replaces `ts-node`, `nodemon`, and `ts-node-dev` for development hot-reloading.

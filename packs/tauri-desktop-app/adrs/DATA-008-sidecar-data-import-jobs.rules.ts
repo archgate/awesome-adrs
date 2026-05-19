@@ -21,17 +21,19 @@ export default {
       async check(ctx) {
         const entryPoints = await ctx.glob("packages/jobs/*/src/main.py");
 
-        for (const file of entryPoints) {
-          const content = await ctx.readFile(file);
+        await Promise.all(
+          entryPoints.map(async (file) => {
+            const content = await ctx.readFile(file);
 
-          if (!content.includes("import argparse") && !content.includes("from argparse")) {
-            ctx.report.violation({
-              message: `${file}: Job entry point does not import argparse. All jobs must expose a CLI interface using argparse.`,
-              file,
-              fix: "Add 'import argparse' and implement a create_parser() function with environment variable fallbacks.",
-            });
-          }
-        }
+            if (!content.includes("import argparse") && !content.includes("from argparse")) {
+              ctx.report.violation({
+                message: `${file}: Job entry point does not import argparse. All jobs must expose a CLI interface using argparse.`,
+                file,
+                fix: "Add 'import argparse' and implement a create_parser() function with environment variable fallbacks.",
+              });
+            }
+          }),
+        );
       },
     },
   },
