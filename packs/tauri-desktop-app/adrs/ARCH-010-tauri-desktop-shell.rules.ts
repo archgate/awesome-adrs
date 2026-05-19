@@ -33,8 +33,6 @@ export default {
         let hasApiDep = false;
 
         for (const pkgFile of pkgFiles) {
-          if (pkgFile.includes("node_modules")) continue;
-
           let pkg: Record<string, unknown>;
           try {
             pkg = (await ctx.readJSON(pkgFile)) as Record<string, unknown>;
@@ -77,8 +75,6 @@ export default {
         const pkgFiles = await ctx.glob("**/package.json");
 
         for (const pkgFile of pkgFiles) {
-          if (pkgFile.includes("node_modules")) continue;
-
           let pkg: Record<string, unknown>;
           try {
             pkg = (await ctx.readJSON(pkgFile)) as Record<string, unknown>;

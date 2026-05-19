@@ -6,7 +6,9 @@ export default {
       description:
         "Database connection code must read from environment variables, not hardcoded paths",
       async check(ctx) {
-        const tsFiles = await ctx.glob("packages/datamodels/**/src/**/*.ts");
+        const tsFiles = ctx.scopedFiles.filter(
+          (f) => f.endsWith(".ts") && (f.includes("/src/") || f.includes("\\src\\")),
+        );
 
         for (const file of tsFiles) {
           // Skip test files and migration files

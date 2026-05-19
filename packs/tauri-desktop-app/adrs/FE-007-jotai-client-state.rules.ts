@@ -44,7 +44,9 @@ export default {
         }
 
         // Jotai is optional — only warn if atoms directory exists but jotai is missing
-        const atomFiles = await ctx.glob("packages/frontend/src/atoms/**/*.ts");
+        const atomFiles = ctx.scopedFiles.filter(
+          (f) => f.endsWith(".ts") && (f.includes("/src/atoms/") || f.includes("\\src\\atoms\\")),
+        );
         if (atomFiles.length > 0 && !allDeps["jotai"]) {
           ctx.report.violation({
             message: "packages/frontend has atom files but jotai is not listed as a dependency",

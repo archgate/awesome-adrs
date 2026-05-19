@@ -37,7 +37,9 @@ export default {
       description:
         "Route files must import from @hono/zod-openapi and use .openapi() instead of raw HTTP methods",
       async check(ctx) {
-        const routeFiles = await ctx.glob("packages/backend/src/routes/*.ts");
+        const routeFiles = ctx.scopedFiles.filter((f) =>
+          /[\\/]src[\\/]routes[\\/][^\\/]+\.ts$/.test(f),
+        );
 
         for (const file of routeFiles) {
           if (file.includes(".test.") || file.includes(".spec.")) continue;

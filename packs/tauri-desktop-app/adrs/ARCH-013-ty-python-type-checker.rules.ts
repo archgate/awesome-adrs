@@ -16,9 +16,6 @@ export default {
         for (const { glob, name } of forbidden) {
           const files = await ctx.glob(glob);
           for (const file of files) {
-            if (file.includes("node_modules/")) continue;
-            if (file.includes(".venv/")) continue;
-
             ctx.report.violation({
               message: `${file}: legacy type checker config "${name}" found — ty is the mandatory type checker, configured in pyproject.toml`,
               file,
@@ -28,7 +25,9 @@ export default {
         }
 
         // Also check for mypy/pyright config sections in pyproject.toml
-        const pyprojectFiles = await ctx.glob("packages/jobs/**/pyproject.toml");
+        const pyprojectFiles = ctx.scopedFiles.filter(
+          (f) => f.endsWith("/pyproject.toml") || f.endsWith("\\pyproject.toml"),
+        );
         for (const file of pyprojectFiles) {
           const content = await ctx.readFile(file);
 

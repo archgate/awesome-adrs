@@ -5,7 +5,9 @@ export default {
     "cors-middleware-import": {
       description: "Backend source files must import hono/cors for CORS support",
       async check(ctx) {
-        const backendFiles = await ctx.glob("packages/backend/src/**/*.ts");
+        const backendFiles = ctx.scopedFiles.filter(
+          (f) => f.endsWith(".ts") && f.startsWith("packages/backend/src/"),
+        );
 
         if (backendFiles.length === 0) return;
 

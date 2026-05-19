@@ -6,9 +6,11 @@ export default {
       description:
         "All database column name strings in Drizzle schema definitions must be snake_case",
       async check(ctx) {
-        const schemaFiles = await ctx.glob("packages/**/src/schema.ts");
-        const schemaDir = await ctx.glob("packages/**/src/schema/*.ts");
-        const allFiles = [...schemaFiles, ...schemaDir];
+        const allFiles = ctx.scopedFiles.filter(
+          (f) =>
+            f.endsWith(".ts") &&
+            (/[\\/]src[\\/]schema\.ts$/.test(f) || /[\\/]src[\\/]schema[\\/]/.test(f)),
+        );
 
         const SNAKE_CASE = /^[a-z][a-z0-9_]*$/;
         const COLUMN_NAME_PATTERN = /(?:text|integer|real|blob)\s*\(\s*["']([^"']+)["']/g;

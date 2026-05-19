@@ -43,8 +43,8 @@ export default {
       description:
         "All translation JSON files must have identical key structures across supported languages",
       async check(ctx) {
-        const translationFiles = await ctx.glob(
-          "packages/frontend/src/i18n/locales/*/translation.json",
+        const translationFiles = ctx.scopedFiles.filter((f) =>
+          /[\\/]src[\\/]i18n[\\/]locales[\\/][^\\/]+[\\/]translation\.json$/.test(f),
         );
 
         if (translationFiles.length < 2) {

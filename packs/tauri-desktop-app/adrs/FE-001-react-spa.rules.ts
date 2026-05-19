@@ -66,7 +66,7 @@ export default {
       description:
         "No class components allowed in frontend .tsx files — use function components with hooks",
       async check(ctx) {
-        const tsxFiles = await ctx.glob("packages/frontend/**/*.tsx");
+        const tsxFiles = ctx.scopedFiles.filter((f) => f.endsWith(".tsx"));
 
         for (const file of tsxFiles) {
           const matches = await ctx.grep(file, /class\s+\w+\s+extends\s+(\w+\.)?Component/);

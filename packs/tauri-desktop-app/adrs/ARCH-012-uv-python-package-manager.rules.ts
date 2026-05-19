@@ -5,10 +5,12 @@ export default {
     "pyproject-toml-exists": {
       description: "Python job packages must have a pyproject.toml file",
       async check(ctx) {
-        const pyFiles = await ctx.glob("packages/jobs/**/*.py");
+        const pyFiles = ctx.scopedFiles.filter((f) => f.endsWith(".py"));
         if (pyFiles.length === 0) return;
 
-        const pyprojectFiles = await ctx.glob("packages/jobs/**/pyproject.toml");
+        const pyprojectFiles = ctx.scopedFiles.filter(
+          (f) => f.endsWith("/pyproject.toml") || f.endsWith("\\pyproject.toml"),
+        );
         if (pyprojectFiles.length === 0) {
           ctx.report.violation({
             message:
@@ -36,9 +38,6 @@ export default {
         for (const { glob, name } of forbidden) {
           const files = await ctx.glob(glob);
           for (const file of files) {
-            if (file.includes("node_modules/")) continue;
-            if (file.includes(".venv/")) continue;
-
             ctx.report.violation({
               message: `${file}: legacy Python config file "${name}" found — UV uses pyproject.toml + uv.lock exclusively`,
               file,

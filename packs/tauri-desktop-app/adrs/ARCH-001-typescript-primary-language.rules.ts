@@ -5,16 +5,9 @@ export default {
     "no-js-files": {
       description: "All source code must be TypeScript — no .js/.jsx files in source directories",
       async check(ctx) {
-        const excludeDirs = ["node_modules", "dist", "build", ".moon"];
-
         const jsFiles = [...(await ctx.glob("**/*.js")), ...(await ctx.glob("**/*.jsx"))];
 
         for (const file of jsFiles) {
-          const shouldExclude = excludeDirs.some(
-            (dir) => file.includes(`/${dir}/`) || file.includes(`\\${dir}\\`),
-          );
-          if (shouldExclude) continue;
-
           // Allow config files at root (e.g., prettier.config.js, eslint.config.js)
           if (
             !file.includes("/src/") &&

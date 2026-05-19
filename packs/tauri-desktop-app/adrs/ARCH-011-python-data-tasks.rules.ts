@@ -10,9 +10,6 @@ export default {
         const ALLOWED_PATTERNS = [/^packages\/jobs\//];
 
         for (const file of pyFiles) {
-          if (file.includes("node_modules/")) continue;
-          if (file.includes(".venv/")) continue;
-
           const isAllowed = ALLOWED_PATTERNS.some((pattern) => pattern.test(file));
           if (!isAllowed) {
             ctx.report.violation({

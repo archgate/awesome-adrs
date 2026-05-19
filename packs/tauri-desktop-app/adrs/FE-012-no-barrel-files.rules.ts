@@ -6,10 +6,14 @@ export default {
       description:
         "No index.ts/index.tsx barrel files that re-export from other modules in the frontend",
       async check(ctx) {
-        const indexFiles = [
-          ...(await ctx.glob("packages/frontend/src/**/index.ts")),
-          ...(await ctx.glob("packages/frontend/src/**/index.tsx")),
-        ];
+        const indexFiles = ctx.scopedFiles.filter(
+          (f) =>
+            (f.endsWith("/index.ts") ||
+              f.endsWith("\\index.ts") ||
+              f.endsWith("/index.tsx") ||
+              f.endsWith("\\index.tsx")) &&
+            (f.includes("/src/") || f.includes("\\src\\")),
+        );
 
         // Patterns that indicate a barrel / re-export file
         const RE_EXPORT_PATTERNS = [

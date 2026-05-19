@@ -5,7 +5,7 @@ export default {
     "drizzle-config-present": {
       description: "Datamodel packages with a schema file must have a drizzle.config.ts",
       async check(ctx) {
-        const schemaFiles = await ctx.glob("packages/datamodels/*/src/schema.ts");
+        const schemaFiles = ctx.scopedFiles.filter((f) => /[\\/]src[\\/]schema\.ts$/.test(f));
 
         for (const schemaFile of schemaFiles) {
           const packageRoot = schemaFile.replace("/src/schema.ts", "");
@@ -26,7 +26,7 @@ export default {
       description:
         "Datamodel packages with a drizzle config must have a migrations directory with at least one SQL file",
       async check(ctx) {
-        const schemaFiles = await ctx.glob("packages/datamodels/*/src/schema.ts");
+        const schemaFiles = ctx.scopedFiles.filter((f) => /[\\/]src[\\/]schema\.ts$/.test(f));
 
         for (const schemaFile of schemaFiles) {
           const packageRoot = schemaFile.replace("/src/schema.ts", "");

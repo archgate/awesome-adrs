@@ -30,7 +30,11 @@ export default {
       description:
         "Presentational component .tsx files must have corresponding colocated .stories.tsx files",
       async check(ctx) {
-        const componentFiles = await ctx.glob("packages/frontend/src/components/**/*.tsx");
+        const componentFiles = ctx.scopedFiles.filter(
+          (f) =>
+            f.endsWith(".tsx") &&
+            (f.includes("/src/components/") || f.includes("\\src\\components\\")),
+        );
 
         for (const file of componentFiles) {
           // Skip non-component files

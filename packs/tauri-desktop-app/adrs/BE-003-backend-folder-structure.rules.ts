@@ -7,7 +7,9 @@ export default {
         "Route handlers must live in packages/backend/src/routes/, not in other directories",
       async check(ctx) {
         const backendSrc = "packages/backend/src";
-        const allTsFiles = await ctx.glob(`${backendSrc}/**/*.ts`);
+        const allTsFiles = ctx.scopedFiles.filter(
+          (f) => f.endsWith(".ts") && f.startsWith(`${backendSrc}/`),
+        );
 
         for (const file of allTsFiles) {
           const relativePath = file.replace(`${backendSrc}/`, "");
@@ -43,7 +45,9 @@ export default {
           return;
         }
 
-        const routeFiles = await ctx.glob(`${routesDir}/*.ts`);
+        const routeFiles = ctx.scopedFiles.filter((f) =>
+          /[\\/]src[\\/]routes[\\/][^\\/]+\.ts$/.test(f),
+        );
 
         for (const file of routeFiles) {
           if (file.includes(".test.") || file.includes(".spec.")) continue;
