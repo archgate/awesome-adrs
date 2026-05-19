@@ -42,11 +42,7 @@ export default {
     "no-wrong-formatters": {
       description: "No competing formatter configs allowed — only Prettier",
       async check(ctx) {
-        const forbiddenFiles = [
-          "biome.json",
-          "biome.jsonc",
-          "dprint.json",
-        ];
+        const forbiddenFiles = ["biome.json", "biome.jsonc", "dprint.json"];
 
         await Promise.all(
           forbiddenFiles.map(async (file) => {
