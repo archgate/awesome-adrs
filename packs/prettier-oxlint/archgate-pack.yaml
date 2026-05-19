@@ -1,0 +1,11 @@
+name: prettier-oxlint
+version: 0.1.0
+description: Code formatting with Prettier and linting with Oxlint for TypeScript and JavaScript projects.
+maintainers:
+  - github: rhuan-barreto
+tags:
+  - tool:prettier
+  - tool:oxlint
+  - language:typescript
+  - language:javascript
+  - concern:quality

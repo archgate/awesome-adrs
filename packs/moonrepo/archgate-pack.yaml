@@ -1,0 +1,9 @@
+name: moonrepo
+version: 0.1.0
+description: Monorepo management with Moonrepo — task orchestration, caching, and standardized folder structure.
+maintainers:
+  - github: rhuan-barreto
+tags:
+  - tool:moonrepo
+  - concern:monorepo
+  - language:typescript

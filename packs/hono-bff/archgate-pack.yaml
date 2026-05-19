@@ -1,0 +1,9 @@
+name: hono-bff
+version: 0.1.0
+description: Backend for Frontend with Hono — BFF pattern, type-safe API with Zod OpenAPI, and standardized folder structure.
+maintainers:
+  - github: rhuan-barreto
+tags:
+  - framework:hono
+  - language:typescript
+  - stack:backend
