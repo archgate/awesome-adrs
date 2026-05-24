@@ -1,0 +1,9 @@
+name: mui-react
+version: 0.1.0
+description: MUI (Material UI) as the React component library — theming, layout primitives, and accessible components.
+maintainers:
+  - github: rhuan-barreto
+tags:
+  - framework:react
+  - library:mui
+  - language:typescript

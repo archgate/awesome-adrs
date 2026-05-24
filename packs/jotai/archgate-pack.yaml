@@ -1,0 +1,9 @@
+name: jotai
+version: 0.1.0
+description: Jotai for client-side global state — atomic state management for React applications.
+maintainers:
+  - github: rhuan-barreto
+tags:
+  - framework:react
+  - library:jotai
+  - language:typescript

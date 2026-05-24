@@ -1,0 +1,10 @@
+name: storybook-react
+version: 0.1.0
+description: Storybook for isolated React component development — stories, interaction tests, and visual regression.
+maintainers:
+  - github: rhuan-barreto
+tags:
+  - framework:react
+  - tool:storybook
+  - concern:testing
+  - language:typescript
