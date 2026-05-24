@@ -1,0 +1,10 @@
+name: python-uv-sidecar
+version: 0.1.0
+description: Python data pipeline toolchain — UV package management, ty type checking, and sidecar data import jobs.
+maintainers:
+  - github: rhuan-barreto
+tags:
+  - language:python
+  - tool:uv
+  - tool:ty
+  - concern:data
