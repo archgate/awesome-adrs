@@ -1,0 +1,10 @@
+name: hono-react-e2e
+version: 0.1.0
+description: End-to-end type safety between Hono backend and React frontend — types flow from Drizzle to Zod to Hono RPC to the UI.
+maintainers:
+  - github: rhuan-barreto
+tags:
+  - framework:hono
+  - framework:react
+  - language:typescript
+  - concern:type-safety

@@ -1,0 +1,8 @@
+name: proto-toolchain
+version: 0.1.0
+description: Toolchain version management with Proto — pin and synchronize tool versions from a single file.
+maintainers:
+  - github: rhuan-barreto
+tags:
+  - tool:proto
+  - concern:toolchain

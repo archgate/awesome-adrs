@@ -1,0 +1,9 @@
+name: bun-runtime
+version: 0.1.0
+description: Bun as the unified package manager and TypeScript runtime — replaces npm/yarn/pnpm and ts-node/nodemon.
+maintainers:
+  - github: rhuan-barreto
+tags:
+  - runtime:bun
+  - language:typescript
+  - concern:toolchain
