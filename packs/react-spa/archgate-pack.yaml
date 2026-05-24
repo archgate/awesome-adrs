@@ -1,0 +1,10 @@
+name: react-spa
+version: 0.1.0
+description: Core React SPA architecture — TypeScript, Vite, component patterns, folder structure, no barrel files, no path aliases.
+maintainers:
+  - github: rhuan-barreto
+tags:
+  - framework:react
+  - language:typescript
+  - build:vite
+  - stack:frontend
