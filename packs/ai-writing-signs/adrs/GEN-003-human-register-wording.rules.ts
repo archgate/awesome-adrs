@@ -300,7 +300,9 @@ const VOCABULARY: Phrase[] = [
   { pattern: /\bgarner(?:s|ed|ing)?\b/iu, plain: "get, attract" },
   { pattern: /\bbolster(?:s|ed|ing)?\b/iu, plain: "support, strengthen" },
   {
-    pattern: /\bunderscor(?:es|ed|ing)\b|\bunderscore (?:the|its|their|how|that|this)\b/iu,
+    // Verb only; "hyphens or underscores" is the character.
+    pattern:
+      /\bunderscor(?:e|es|ed|ing) (?:the|its|their|his|her|our|how|that|this|a|an|why|what)\b/iu,
     plain: "show, stress",
   },
   { pattern: /\butili[sz](?:e|es|ed|ing)\b/iu, plain: "use" },

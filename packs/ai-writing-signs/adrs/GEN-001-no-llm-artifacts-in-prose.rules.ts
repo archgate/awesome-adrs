@@ -299,7 +299,9 @@ const CHAT_RESIDUE: RegExp[] = [
 
 /** Bracketed template slots that were never filled in. */
 const PLACEHOLDERS: RegExp[] = [
-  /\[(?:insert|your|add|enter|company|project|placeholder|name|date|link|description)\b[^\]\n]{0,60}\](?!\s*[([:])/iu,
+  // A bare `[` (not a link, aside or reference) opening a slot such as
+  // `[Insert X here]`, `[Your Name]`, `[Add link]`, `[Company Name]`, `[TBD here]`.
+  /(?<![\w:\]])\[(?:insert|your|add|enter|placeholder|company name|[^\]\n]{0,40} here)\b[^\]\n]{0,60}\](?!\s*[([:])/iu,
   /\blorem ipsum\b/iu,
 ];
 
