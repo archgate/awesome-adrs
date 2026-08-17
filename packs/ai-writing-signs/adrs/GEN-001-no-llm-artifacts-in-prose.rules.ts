@@ -1,0 +1,236 @@
+/// <reference path="../rules.d.ts" />
+
+// ---------- Markdown prose extraction (duplicated per rules file; rule files
+// cannot import each other) ----------
+
+interface ProseLine {
+  /** 1-based line number in the source file. */
+  line: number;
+  /** Line with HTML comments and inline code spans blanked to spaces. */
+  text: string;
+  /** `text` with link targets and bare URLs blanked as well. */
+  words: string;
+  /** Inside a fenced code block: content of its own, never prose. */
+  code: boolean;
+}
+
+const FENCE = /^ {0,3}(`{3,}|~{3,})(.*)$/u;
+const FRONTMATTER_DELIMITER = /^---\s*$/u;
+
+/** Same-length run of spaces, so columns of later matches stay stable. */
+function blank(s: string): string {
+  return " ".repeat(s.length);
+}
+
+/**
+ * Prose lines of a Markdown document: YAML frontmatter, fenced code blocks and
+ * HTML comments are dropped; inline code spans, link targets and bare URLs are
+ * blanked so their contents never match a prose pattern.
+ */
+function proseLines(content: string): ProseLine[] {
+  const out: ProseLine[] = [];
+  const lines = content.split(/\r?\n/u);
+  let inFrontmatter = FRONTMATTER_DELIMITER.test(lines[0] ?? "");
+  let fence: { marker: string; length: number } | null = null;
+  let inComment = false;
+
+  for (const [index, raw] of lines.entries()) {
+    if (inFrontmatter) {
+      if (index > 0 && FRONTMATTER_DELIMITER.test(raw)) inFrontmatter = false;
+      continue;
+    }
+
+    const fenceMatch = FENCE.exec(raw);
+    if (fence) {
+      const closes =
+        fenceMatch !== null &&
+        fenceMatch[1][0] === fence.marker &&
+        fenceMatch[1].length >= fence.length &&
+        fenceMatch[2].trim() === "";
+      if (closes) fence = null;
+      out.push({ line: index + 1, text: "", words: "", code: true });
+      continue;
+    }
+    if (fenceMatch) {
+      fence = { marker: fenceMatch[1][0], length: fenceMatch[1].length };
+      out.push({ line: index + 1, text: "", words: "", code: true });
+      continue;
+    }
+
+    let text = raw;
+    if (inComment) {
+      const end = text.indexOf("-->");
+      if (end === -1) continue;
+      text = blank(text.slice(0, end + 3)) + text.slice(end + 3);
+      inComment = false;
+    }
+    text = text.replace(/<!--[\s\S]*?-->/gu, blank);
+    const open = text.indexOf("<!--");
+    if (open !== -1) {
+      text = text.slice(0, open) + blank(text.slice(open));
+      inComment = true;
+    }
+    text = text.replace(/(`+)[\s\S]*?\1/gu, blank);
+
+    const words = text
+      .replace(/\]\(([^)]*)\)/gu, (_m, target: string) => `](${blank(target)})`)
+      .replace(/<https?:\/\/[^>]*>/gu, blank)
+      .replace(/https?:\/\/\S+/gu, blank);
+
+    out.push({ line: index + 1, text, words, code: false });
+  }
+  return out;
+}
+
+async function scanMarkdown(
+  ctx: RuleContext,
+  visit: (file: string, lines: ProseLine[]) => void,
+): Promise<void> {
+  const files = ctx.scopedFiles.filter((f) => f.endsWith(".md") || f.endsWith(".mdx"));
+  await Promise.all(
+    files.map(async (file) => {
+      let content: string;
+      try {
+        content = await ctx.readFile(file);
+      } catch {
+        return;
+      }
+      visit(file, proseLines(content));
+    }),
+  );
+}
+
+// ---------- Patterns ----------
+
+/** Tokens emitted by a model's browsing/citation tooling, keyed by vendor. */
+const CITATION_RESIDUE: { pattern: RegExp; vendor: string }[] = [
+  {
+    pattern:
+      /contentReference|oaicite|oai_citation|attributableIndex|\bturn\d+(?:search|view|news|image|fetch|file)\d+\b|【[^】]*†[^】]*】/u,
+    vendor: "ChatGPT",
+  },
+  {
+    pattern: /\[cite:\s*\d+\]?|\[span_\d+\]\(start_span\)|\(end_span\)/u,
+    vendor: "Gemini",
+  },
+  { pattern: /grok_card|grok_render_citation_card_json/u, vendor: "Grok" },
+  { pattern: /ppl-ai-file-upload|\battached_file\b/u, vendor: "Perplexity" },
+  { pattern: /:::writing/u, vendor: "an unattributed model" },
+];
+
+/** Chat-turn framing and capability disclaimers addressed to a chat user. */
+const CHAT_RESIDUE: RegExp[] = [
+  /\bAs an AI(?: language model| assistant| model)?\b/iu,
+  /\bas of my (?:last |latest )?(?:knowledge (?:cutoff|update)|training (?:data|cutoff))\b/iu,
+  /\bI (?:cannot|can't|am unable to|don't have the ability to) (?:browse|access) (?:the internet|the web|real-time|external|live)/iu,
+  /^\s*(?:>\s*)?(?:Certainly|Great question|Absolutely)[!,]/u,
+  /^\s*(?:>\s*)?Sure!/u,
+  /\bI hope this helps\b/iu,
+  /\bLet me know if you(?:'d| would) like\b/iu,
+  /\bWould you like me to\b/iu,
+  /\bHere(?:'s| is) (?:a|an|the|your) (?:revised|updated|improved|polished|rewritten|refined|complete|full) (?:version|draft|text|document|README)\b/iu,
+  /\bI(?:'ve| have) (?:updated|revised|rewritten|drafted) the (?:above|following|document|text)\b/iu,
+];
+
+/** Bracketed template slots that were never filled in. */
+const PLACEHOLDERS: RegExp[] = [
+  /\[(?:insert|your|add|enter|company|project|todo|tbd|fixme|placeholder|name|date|link|description)\b[^\]\n]{0,60}\](?!\s*[([:])/iu,
+  /\blorem ipsum\b/iu,
+];
+
+const TRACKING_PARAM = /[?&](utm_(?:source|medium|campaign|term|content))=/u;
+
+// ---------- Rules ----------
+
+export default {
+  rules: {
+    "no-llm-citation-residue": {
+      description:
+        "Prose must not contain citation-tool tokens left behind by a language model (oaicite, turn0search0, [cite: N], grok_card, ppl-ai-file-upload, ...)",
+      severity: "error",
+      async check(ctx) {
+        await scanMarkdown(ctx, (file, lines) => {
+          for (const { line, text } of lines) {
+            for (const { pattern, vendor } of CITATION_RESIDUE) {
+              const m = pattern.exec(text);
+              if (!m) continue;
+              ctx.report.violation({
+                message: `"${m[0]}" is a citation artifact from ${vendor}'s tooling, not text a person wrote.`,
+                file,
+                line,
+                fix: "Delete the token. If the sentence needs a source, add a real link or footnote in its place.",
+              });
+              break;
+            }
+          }
+        });
+      },
+    },
+
+    "no-chat-residue": {
+      description:
+        "Prose must not carry chat-turn framing or capability disclaimers (Certainly!, I hope this helps, As an AI language model, ...)",
+      severity: "error",
+      async check(ctx) {
+        await scanMarkdown(ctx, (file, lines) => {
+          for (const { line, text } of lines) {
+            for (const pattern of CHAT_RESIDUE) {
+              const m = pattern.exec(text);
+              if (!m) continue;
+              ctx.report.violation({
+                message: `"${m[0].trim()}" addresses a chat user, not the reader of this document.`,
+                file,
+                line,
+                fix: "Delete the sentence, or rewrite it as a statement about the subject rather than about the conversation.",
+              });
+              break;
+            }
+          }
+        });
+      },
+    },
+
+    "no-unfilled-placeholders": {
+      description:
+        "Prose must not ship bracketed template slots ([Insert X here], [Your Name], lorem ipsum)",
+      severity: "warning",
+      async check(ctx) {
+        await scanMarkdown(ctx, (file, lines) => {
+          for (const { line, words } of lines) {
+            for (const pattern of PLACEHOLDERS) {
+              const m = pattern.exec(words);
+              if (!m) continue;
+              ctx.report.warning({
+                message: `"${m[0]}" is an unfilled placeholder.`,
+                file,
+                line,
+                fix: "Fill the slot with real content, or remove the sentence that needed it. If this file is a deliberate template, exclude its directory in the ADR's `files` globs.",
+              });
+              break;
+            }
+          }
+        });
+      },
+    },
+
+    "no-tracking-params-in-links": {
+      description:
+        "Links must not carry utm_* tracking parameters copied from a model's link output",
+      severity: "error",
+      async check(ctx) {
+        await scanMarkdown(ctx, (file, lines) => {
+          for (const { line, text } of lines) {
+            const m = TRACKING_PARAM.exec(text);
+            if (!m) continue;
+            ctx.report.violation({
+              message: `Link carries the tracking parameter "${m[1]}", which identifies where the URL was copied from rather than what it points to.`,
+              file,
+              line,
+              fix: "Remove the utm_* parameters (and the trailing `?` or `&` left behind) so the link is the canonical address.",
+            });
+          }
+        });
+      },
+    },
+  },
+} satisfies RuleSet;
