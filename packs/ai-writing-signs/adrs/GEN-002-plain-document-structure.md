@@ -25,6 +25,8 @@ Markdown documents SHOULD keep a plain, hierarchical structure:
 - Bold marks the occasional term, not a rhythm. A document with more than two bold spans per hundred words (and at least eight in total) is over-emphasised. Four or more consecutive list items that each open with a bold label are reported at `info` as the "inline-header list" pattern.
 - Horizontal rules do not separate ordinary sections; headings already do that. Two or more rules each directly followed by a heading are reported.
 
+Files that declare `@generated` in their first lines are skipped entirely; nobody authored their structure.
+
 The thresholds come from measuring Markdown in the archgate repositories: hand-edited guide pages sit at 0 to 2 bold spans per hundred words, while model-drafted ADRs run 2 to 5 with dozens of bold-led list items. Numbers are in the companion rules file and are meant to be tuned per project, not treated as truth.
 
 ## Do's and Don'ts

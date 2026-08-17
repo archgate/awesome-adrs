@@ -1,8 +1,10 @@
 # ai-writing-signs
 
-Keep Markdown prose free of the tells catalogued in Wikipedia's [Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing): leftover model artifacts, machine-shaped document structure, and AI-register wording.
+Keep Markdown prose and code comments free of the tells catalogued in Wikipedia's [Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing): leftover model artifacts, machine-shaped document structure, and AI-register wording.
 
 The pack is tiered by confidence. Deterministic artifacts block; structure and wording are advisory and become blocking only under `archgate check --strict`.
+
+GEN-001 and GEN-003 read Markdown documents and source-code comments (`//` and `/* */` in C-family languages, `#` in script languages and YAML/TOML, `--` in SQL and Lua). GEN-002 is about document shape and reads Markdown only.
 
 ## Included ADRs
 

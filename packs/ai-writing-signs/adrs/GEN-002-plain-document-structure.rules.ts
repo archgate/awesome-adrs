@@ -82,6 +82,11 @@ function proseLines(content: string): ProseLine[] {
   return out;
 }
 
+/** Generated files carry an `@generated` marker in their first lines; nobody authored their prose. */
+function isGenerated(content: string): boolean {
+  return /@generated\b/u.test(content.slice(0, 300));
+}
+
 async function scanMarkdown(
   ctx: RuleContext,
   visit: (file: string, lines: ProseLine[]) => void,
@@ -95,6 +100,7 @@ async function scanMarkdown(
       } catch {
         return;
       }
+      if (isGenerated(content)) return;
       visit(file, proseLines(content));
     }),
   );

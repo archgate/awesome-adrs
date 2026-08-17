@@ -82,20 +82,185 @@ function proseLines(content: string): ProseLine[] {
   return out;
 }
 
-async function scanMarkdown(
+// ---------- Source-comment extraction ----------
+
+/** Double-slash line comments and slash-star block comments. */
+const SLASH_COMMENT_EXTENSIONS = new Set([
+  "ts",
+  "tsx",
+  "mts",
+  "cts",
+  "js",
+  "jsx",
+  "mjs",
+  "cjs",
+  "java",
+  "kt",
+  "kts",
+  "go",
+  "rs",
+  "c",
+  "h",
+  "cpp",
+  "hpp",
+  "cc",
+  "cs",
+  "swift",
+  "scala",
+  "dart",
+  "php",
+  "groovy",
+]);
+/** `#` line comments. */
+const HASH_COMMENT_EXTENSIONS = new Set([
+  "py",
+  "rb",
+  "sh",
+  "bash",
+  "zsh",
+  "pl",
+  "r",
+  "yml",
+  "yaml",
+  "toml",
+  "tf",
+  "ps1",
+]);
+/** `--` line comments. */
+const DASH_COMMENT_EXTENSIONS = new Set(["sql", "lua"]);
+
+function extensionOf(file: string): string {
+  const dot = file.lastIndexOf(".");
+  return dot === -1 ? "" : file.slice(dot + 1).toLowerCase();
+}
+
+/**
+ * Heuristic string check: a comment marker counts only when the code before it
+ * has balanced quotes, so `"http://x"` and `'#'` are not read as comments.
+ */
+function outsideString(prefix: string): boolean {
+  let dq = 0;
+  let sq = 0;
+  let bt = 0;
+  for (let i = 0; i < prefix.length; i++) {
+    const c = prefix[i];
+    if (c === "\\") {
+      i++;
+      continue;
+    }
+    if (c === '"') dq++;
+    else if (c === "'") sq++;
+    else if (c === "`") bt++;
+  }
+  return dq % 2 === 0 && sq % 2 === 0 && bt % 2 === 0;
+}
+
+/** Earliest comment marker on a line that sits outside a string literal. */
+function findMarker(
+  line: string,
+  slash: boolean,
+  hash: boolean,
+  dash: boolean,
+): { at: number; marker: "//" | "/*" | "#" | "--" } | null {
+  let best: { at: number; marker: "//" | "/*" | "#" | "--" } | null = null;
+  const consider = (re: RegExp, marker: "//" | "/*" | "#" | "--") => {
+    for (const m of line.matchAll(re)) {
+      const at = m.index + (m[1]?.length ?? 0);
+      if (best && at >= best.at) break;
+      if (outsideString(line.slice(0, at))) {
+        best = { at, marker };
+        break;
+      }
+    }
+  };
+  if (slash) {
+    consider(/(^|[^:])\/\//gu, "//");
+    consider(/()\/\*/gu, "/*");
+  }
+  if (hash) consider(/(^|\s)#/gu, "#");
+  if (dash) consider(/(^|\s)--/gu, "--");
+  return best;
+}
+
+/**
+ * Comment text of a source file as prose lines, everything else blanked so
+ * columns hold. Covers slash-style line and block comments (C-family), `#` (script languages) and
+ * `--` (SQL, Lua). Docstrings and heredocs are not comments and are skipped.
+ */
+function commentLines(content: string, ext: string): ProseLine[] {
+  const slash = SLASH_COMMENT_EXTENSIONS.has(ext);
+  const hash = HASH_COMMENT_EXTENSIONS.has(ext);
+  const dash = DASH_COMMENT_EXTENSIONS.has(ext);
+  if (!slash && !hash && !dash) return [];
+
+  const out: ProseLine[] = [];
+  let inBlock = false;
+  for (const [index, raw] of content.split(/\r?\n/u).entries()) {
+    if (index === 0 && raw.startsWith("#!")) continue;
+    let text: string;
+    if (inBlock) {
+      const end = raw.indexOf("*/");
+      text = end === -1 ? raw : raw.slice(0, end) + blank(raw.slice(end));
+      if (end !== -1) inBlock = false;
+      // Blank the decorative leading `*` of a block-comment continuation line.
+      text = text.replace(/^(\s*)\*(?!\/)/u, (_m, ws: string) => `${ws} `);
+    } else {
+      const found = findMarker(raw, slash, hash, dash);
+      if (!found) continue;
+      const { at, marker } = found;
+      const start = at + marker.length;
+      if (marker === "/*") {
+        const end = raw.indexOf("*/", start);
+        const body = end === -1 ? raw.slice(start) : raw.slice(start, end);
+        text = blank(raw.slice(0, start)) + body.replace(/^\*+/u, blank);
+        if (end === -1) inBlock = true;
+        else text += blank(raw.slice(end));
+      } else {
+        text = blank(raw.slice(0, start)) + raw.slice(start);
+      }
+    }
+    if (text.trim() === "") continue;
+
+    text = text.replace(/(`+)[\s\S]*?\1/gu, blank);
+    const words = text.replace(/<https?:\/\/[^>]*>/gu, blank).replace(/https?:\/\/\S+/gu, blank);
+    out.push({ line: index + 1, text, words, code: false });
+  }
+  return out;
+}
+
+/** Generated files carry an `@generated` marker in their first lines; nobody authored their prose. */
+function isGenerated(content: string): boolean {
+  return /@generated\b/u.test(content.slice(0, 300));
+}
+
+/**
+ * Visit every scoped file's prose: Markdown documents through `proseLines`,
+ * source files through `commentLines`. Generated files and files of any other
+ * kind are skipped.
+ */
+async function scanProse(
   ctx: RuleContext,
   visit: (file: string, lines: ProseLine[]) => void,
 ): Promise<void> {
-  const files = ctx.scopedFiles.filter((f) => f.endsWith(".md") || f.endsWith(".mdx"));
   await Promise.all(
-    files.map(async (file) => {
+    ctx.scopedFiles.map(async (file) => {
+      const ext = extensionOf(file);
+      const markdown = ext === "md" || ext === "mdx";
+      if (
+        !markdown &&
+        !SLASH_COMMENT_EXTENSIONS.has(ext) &&
+        !HASH_COMMENT_EXTENSIONS.has(ext) &&
+        !DASH_COMMENT_EXTENSIONS.has(ext)
+      )
+        return;
       let content: string;
       try {
         content = await ctx.readFile(file);
       } catch {
         return;
       }
-      visit(file, proseLines(content));
+      if (isGenerated(content)) return;
+      visit(file, markdown ? proseLines(content) : commentLines(content, ext));
     }),
   );
 }
@@ -134,7 +299,7 @@ const CHAT_RESIDUE: RegExp[] = [
 
 /** Bracketed template slots that were never filled in. */
 const PLACEHOLDERS: RegExp[] = [
-  /\[(?:insert|your|add|enter|company|project|todo|tbd|fixme|placeholder|name|date|link|description)\b[^\]\n]{0,60}\](?!\s*[([:])/iu,
+  /\[(?:insert|your|add|enter|company|project|placeholder|name|date|link|description)\b[^\]\n]{0,60}\](?!\s*[([:])/iu,
   /\blorem ipsum\b/iu,
 ];
 
@@ -149,7 +314,7 @@ export default {
         "Prose must not contain citation-tool tokens left behind by a language model (oaicite, turn0search0, [cite: N], grok_card, ppl-ai-file-upload, ...)",
       severity: "error",
       async check(ctx) {
-        await scanMarkdown(ctx, (file, lines) => {
+        await scanProse(ctx, (file, lines) => {
           for (const { line, text } of lines) {
             for (const { pattern, vendor } of CITATION_RESIDUE) {
               const m = pattern.exec(text);
@@ -172,7 +337,7 @@ export default {
         "Prose must not carry chat-turn framing or capability disclaimers (Certainly!, I hope this helps, As an AI language model, ...)",
       severity: "error",
       async check(ctx) {
-        await scanMarkdown(ctx, (file, lines) => {
+        await scanProse(ctx, (file, lines) => {
           for (const { line, text } of lines) {
             for (const pattern of CHAT_RESIDUE) {
               const m = pattern.exec(text);
@@ -195,7 +360,7 @@ export default {
         "Prose must not ship bracketed template slots ([Insert X here], [Your Name], lorem ipsum)",
       severity: "warning",
       async check(ctx) {
-        await scanMarkdown(ctx, (file, lines) => {
+        await scanProse(ctx, (file, lines) => {
           for (const { line, words } of lines) {
             for (const pattern of PLACEHOLDERS) {
               const m = pattern.exec(words);
@@ -218,7 +383,7 @@ export default {
         "Links must not carry utm_* tracking parameters copied from a model's link output",
       severity: "error",
       async check(ctx) {
-        await scanMarkdown(ctx, (file, lines) => {
+        await scanProse(ctx, (file, lines) => {
           for (const { line, text } of lines) {
             const m = TRACKING_PARAM.exec(text);
             if (!m) continue;
