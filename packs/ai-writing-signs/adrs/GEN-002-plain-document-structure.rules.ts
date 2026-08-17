@@ -87,6 +87,38 @@ function isGenerated(content: string): boolean {
   return /@generated\b/u.test(content.slice(0, 300));
 }
 
+/**
+ * Extracted prose per file, shared by every rule in this file for one run.
+ * Keyed on the `scopedFiles` array, which the engine hands unchanged to each
+ * rule of an ADR and rebuilds on the next run, so nothing goes stale.
+ */
+const PROSE_CACHE = new WeakMap<readonly string[], Map<string, Promise<ProseLine[] | null>>>();
+
+/** Prose of one Markdown file, or null when it is unreadable or generated. */
+function extractProse(ctx: RuleContext, file: string): Promise<ProseLine[] | null> {
+  let perRun = PROSE_CACHE.get(ctx.scopedFiles);
+  if (!perRun) {
+    perRun = new Map();
+    PROSE_CACHE.set(ctx.scopedFiles, perRun);
+  }
+  let pending = perRun.get(file);
+  if (!pending) {
+    pending = (async () => {
+      let content: string;
+      try {
+        content = await ctx.readFile(file);
+      } catch {
+        return null;
+      }
+      if (isGenerated(content)) return null;
+      return proseLines(content);
+    })();
+    perRun.set(file, pending);
+  }
+  return pending;
+}
+
+/** Visit every scoped Markdown file's prose; extraction happens once per file per run. */
 async function scanMarkdown(
   ctx: RuleContext,
   visit: (file: string, lines: ProseLine[]) => void,
@@ -94,14 +126,8 @@ async function scanMarkdown(
   const files = ctx.scopedFiles.filter((f) => f.endsWith(".md") || f.endsWith(".mdx"));
   await Promise.all(
     files.map(async (file) => {
-      let content: string;
-      try {
-        content = await ctx.readFile(file);
-      } catch {
-        return;
-      }
-      if (isGenerated(content)) return;
-      visit(file, proseLines(content));
+      const lines = await extractProse(ctx, file);
+      if (lines) visit(file, lines);
     }),
   );
 }
@@ -202,7 +228,7 @@ function looksTitleCase(text: string): string | null {
 const EMOJI = /\p{Emoji_Presentation}|\p{Extended_Pictographic}\uFE0F/u;
 const LIST_ITEM = /^\s*(?:[-*+]|\d+[.)])\s+/u;
 const BOLD_SPAN = /\*\*[^*\n]+?\*\*|__[^_\n]+?__/gu;
-const BOLD_LED_ITEM = /^\s*(?:[-*+]|\d+[.)])\s+(?:\*\*[^*\n]+?\*\*|__[^_\n]+?__)/u;
+const BOLD_LED_ITEM = /^\s*([-*+]|\d+[.)])\s+(?:\*\*[^*\n]+?\*\*|__[^_\n]+?__)/u;
 
 // Density thresholds (per 100 prose words) and minimum counts; tune per project.
 const BOLD_PER_100_WORDS = 2;
@@ -300,7 +326,8 @@ export default {
           for (const l of lines) {
             const h = parseHeading(l);
             const target = h ? h.text : l.words.replace(LIST_ITEM, "");
-            const lead = target.trimStart().slice(0, 4);
+            // First code point plus a possible U+FE0F selector, never a split surrogate pair.
+            const lead = [...target.trimStart()].slice(0, 2).join("");
             const inHeading = h !== null && EMOJI.test(h.text);
             if (!inHeading && !EMOJI.test(lead)) continue;
             ctx.report.warning({
@@ -346,6 +373,7 @@ export default {
         await scanMarkdown(ctx, (file, lines) => {
           let run = 0;
           let start = 0;
+          let marker = "";
           const flush = () => {
             if (run >= BOLD_LED_RUN) {
               ctx.report.info({
@@ -358,11 +386,20 @@ export default {
             run = 0;
           };
           for (const l of lines) {
-            if (BOLD_LED_ITEM.test(l.words)) {
-              if (run === 0) start = l.line;
+            const item = BOLD_LED_ITEM.exec(l.words);
+            if (item) {
+              // CommonMark starts a new list when the bullet character changes
+              // (or switches between bullets and numbers).
+              const kind = /\d/u.test(item[1]) ? "1" : item[1];
+              if (run > 0 && kind !== marker) flush();
+              if (run === 0) {
+                start = l.line;
+                marker = kind;
+              }
               run++;
             } else if (l.code || (l.text.trim() !== "" && !/^\s+\S/u.test(l.text))) {
-              // A blank line or an indented continuation keeps the run alive.
+              // A blank line between items keeps a loose list going; an
+              // indented continuation belongs to the item above.
               flush();
             }
           }

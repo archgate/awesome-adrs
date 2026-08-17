@@ -165,7 +165,7 @@ function findMarker(
   let best: { at: number; marker: "//" | "/*" | "#" | "--" } | null = null;
   const consider = (re: RegExp, marker: "//" | "/*" | "#" | "--") => {
     for (const m of line.matchAll(re)) {
-      const at = m.index + (m[1]?.length ?? 0);
+      const at = (m.index ?? 0) + (m[1]?.length ?? 0);
       if (best && at >= best.at) break;
       if (outsideString(line.slice(0, at))) {
         best = { at, marker };
@@ -234,16 +234,22 @@ function isGenerated(content: string): boolean {
 }
 
 /**
- * Visit every scoped file's prose: Markdown documents through `proseLines`,
- * source files through `commentLines`. Generated files and files of any other
- * kind are skipped.
+ * Extracted prose per file, shared by every rule in this file for one run.
+ * Keyed on the `scopedFiles` array, which the engine hands unchanged to each
+ * rule of an ADR and rebuilds on the next run, so nothing goes stale.
  */
-async function scanProse(
-  ctx: RuleContext,
-  visit: (file: string, lines: ProseLine[]) => void,
-): Promise<void> {
-  await Promise.all(
-    ctx.scopedFiles.map(async (file) => {
+const PROSE_CACHE = new WeakMap<readonly string[], Map<string, Promise<ProseLine[] | null>>>();
+
+/** Prose of one file, or null when it is unreadable, generated, or not a kind we read. */
+function extractProse(ctx: RuleContext, file: string): Promise<ProseLine[] | null> {
+  let perRun = PROSE_CACHE.get(ctx.scopedFiles);
+  if (!perRun) {
+    perRun = new Map();
+    PROSE_CACHE.set(ctx.scopedFiles, perRun);
+  }
+  let pending = perRun.get(file);
+  if (!pending) {
+    pending = (async () => {
       const ext = extensionOf(file);
       const markdown = ext === "md" || ext === "mdx";
       if (
@@ -252,15 +258,34 @@ async function scanProse(
         !HASH_COMMENT_EXTENSIONS.has(ext) &&
         !DASH_COMMENT_EXTENSIONS.has(ext)
       )
-        return;
+        return null;
       let content: string;
       try {
         content = await ctx.readFile(file);
       } catch {
-        return;
+        return null;
       }
-      if (isGenerated(content)) return;
-      visit(file, markdown ? proseLines(content) : commentLines(content, ext));
+      if (isGenerated(content)) return null;
+      return markdown ? proseLines(content) : commentLines(content, ext);
+    })();
+    perRun.set(file, pending);
+  }
+  return pending;
+}
+
+/**
+ * Visit every scoped file's prose: Markdown documents through `proseLines`,
+ * source files through `commentLines`. Generated files and files of any other
+ * kind are skipped. Extraction happens once per file per run.
+ */
+async function scanProse(
+  ctx: RuleContext,
+  visit: (file: string, lines: ProseLine[]) => void,
+): Promise<void> {
+  await Promise.all(
+    ctx.scopedFiles.map(async (file) => {
+      const lines = await extractProse(ctx, file);
+      if (lines) visit(file, lines);
     }),
   );
 }
@@ -271,7 +296,7 @@ async function scanProse(
 const CITATION_RESIDUE: { pattern: RegExp; vendor: string }[] = [
   {
     pattern:
-      /contentReference|oaicite|oai_citation|attributableIndex|\bturn\d+(?:search|view|news|image|fetch|file)\d+\b|【[^】]*†[^】]*】/u,
+      /contentReference\[oaicite|oaicite|oai_citation|attributableIndex|\bturn\d+(?:search|view|news|image|fetch|file)\d+\b|【[^】]*†[^】]*】/u,
     vendor: "ChatGPT",
   },
   {
@@ -279,7 +304,7 @@ const CITATION_RESIDUE: { pattern: RegExp; vendor: string }[] = [
     vendor: "Gemini",
   },
   { pattern: /grok_card|grok_render_citation_card_json/u, vendor: "Grok" },
-  { pattern: /ppl-ai-file-upload|\battached_file\b/u, vendor: "Perplexity" },
+  { pattern: /ppl-ai-file-upload/u, vendor: "Perplexity" },
   { pattern: /:::writing/u, vendor: "an unattributed model" },
 ];
 
