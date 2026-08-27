@@ -39,6 +39,10 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for how to:
 - Submit a **curated pack** (reviewed by maintainers, earns a "Curated" badge)
 - Add a **community link** (pointer to an external archgate-compatible ADR repo)
 
+## Community
+
+Questions or feedback? Join [r/archgatedev](https://www.reddit.com/r/archgatedev).
+
 ## License
 
 This project is licensed under the Apache License 2.0 — see [LICENSE](LICENSE) for details.
